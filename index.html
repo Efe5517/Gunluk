@@ -121,7 +121,7 @@
 </head>
 <body>
 
-    <!-- ŞIK BİLDİRİM POPUP KUTUSU -->
+    <!-- BİLDİRİM POPUP KUTUSU -->
     <div id="customModal" class="modal-overlay">
         <div class="modal-box">
             <div id="modalIcon" class="modal-icon">🔔</div>
@@ -149,7 +149,7 @@
 
     <main>
 
-        <!-- KULLANICI GİRİŞ VE KAYIT EKRANI -->
+        <!-- GİRİŞ VE KAYIT EKRANI -->
         <div id="authSection" class="section active">
             <div class="auth-container">
                 <div class="auth-tabs">
@@ -238,17 +238,14 @@
     </footer>
 
     <script>
-        // ==========================================
-        // FIREBASE İÇİN YAPILANDIRMA (CONFIG)
-        // Firebase Console'dan alacağınız kendi bilgilerinizi buraya yapıştırabilirsiniz.
-        // ==========================================
+        // FIREBASE YAPILANDIRMASI
         const firebaseConfig = {
-            apiKey: "AIzaSyDemoKeyForF1JournalPlatform2026",
-            authDomain: "f1-journal-app.firebaseapp.com",
-            projectId: "f1-journal-app",
-            storageBucket: "f1-journal-app.appspot.com",
-            messagingSenderId: "123456789012",
-            appId: "1:123456789012:web:abcdef123456"
+            apiKey: "AIzaSyCLSBCDDzqYpF6iuddqF9RW1-t8ZuRMhN4",
+            authDomain: "gunluk-5caa3.firebaseapp.com",
+            projectId: "gunluk-5caa3",
+            storageBucket: "gunluk-5caa3.firebasestorage.app",
+            messagingSenderId: "1039478561181",
+            appId: "1:1039478561181:web:1a14d4c1d1faa1d4877774"
         };
 
         // Firebase Başlatma
@@ -259,10 +256,10 @@
             }
             db = firebase.firestore();
         } catch (e) {
-            console.warn("Firebase başlatılamadı, yerel modda çalışılıyor:", e);
+            console.warn("Firebase başlatılamadı:", e);
         }
 
-        // DEPOLAMA MANTIĞI
+        // DEPOLAMA DEĞİŞKENLERİ
         let users = JSON.parse(localStorage.getItem('app_users')) || [];
         let currentUser = JSON.parse(localStorage.getItem('app_current_user')) || null;
         let localEntries = JSON.parse(localStorage.getItem('app_entries')) || [];
@@ -277,7 +274,7 @@
             listenPublicCloudEntries();
         };
 
-        // BİLDİRİM MODALI FONKSİYONLARI
+        // BİLDİRİM POPUP FONKSİYONLARI
         function showNotice(title, text, icon = "🔔") {
             document.getElementById('modalTitle').innerText = title;
             document.getElementById('modalText').innerText = text;
@@ -304,7 +301,7 @@
             }
         }
 
-        // KÜRESEL BENZERSİZ KULLANICI ADI İLE KAYIT OLMA (FIREBASE INTEGRATION)
+        // KAYIT OLMA (KÜRESEL FIREBASE KONTROLLÜ)
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const fullName = document.getElementById('regFullName').value.trim();
@@ -318,12 +315,12 @@
                 return;
             }
 
-            // 2. Firebase Bulut Kontrolü (Küresel Benzersizlik Kontrolü)
+            // 2. Firebase Bulut Kontrolü
             if (db) {
                 try {
                     const userDoc = await db.collection("users").doc(username).get();
                     if (userDoc.exists) {
-                        showNotice('Hata', 'Bu kullanıcı adı küresel olarak başka bir cihazda halihazırda alınmış!', '❌');
+                        showNotice('Hata', 'Bu kullanıcı adı başka bir cihazda alınmış!', '❌');
                         return;
                     }
                 } catch (err) {
@@ -335,277 +332,3 @@
 
             // Buluta Kaydet
             if (db) {
-                db.collection("users").doc(username).set(newUser)
-                .catch(err => console.error("Kullanıcı bulut kaydı hatası:", err));
-            }
-
-            // Yerel Hafızaya Kaydet
-            users.push(newUser);
-            localStorage.setItem('app_users', JSON.stringify(users));
-
-            currentUser = newUser;
-            localStorage.setItem('app_current_user', JSON.stringify(currentUser));
-
-            showNotice('Tebrikler!', 'Hesabınız başarıyla oluşturuldu ve küresel veritabanına kaydedildi.', '🎉');
-            initApp();
-        });
-
-        // GİRİŞ YAPMA (LOKAL & BULUT DESTEKLİ)
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const username = document.getElementById('loginUsername').value.trim().toLowerCase();
-            const password = document.getElementById('loginPassword').value;
-
-            // Öncelikli olarak yerel hafızadan bak
-            let user = users.find(u => u.username.toLowerCase() === username && u.password === password);
-
-            // Yerelde bulunamadıysa Firebase Bulut Veritabanından Sorgula
-            if (!user && db) {
-                try {
-                    const userDoc = await db.collection("users").doc(username).get();
-                    if (userDoc.exists) {
-                        const cloudUser = userDoc.data();
-                        if (cloudUser.password === password) {
-                            user = cloudUser;
-                            users.push(user);
-                            localStorage.setItem('app_users', JSON.stringify(users));
-                        }
-                    }
-                } catch (err) {
-                    console.warn("Bulut giriş sorgusu hatası:", err);
-                }
-            }
-
-            if (user) {
-                currentUser = user;
-                localStorage.setItem('app_current_user', JSON.stringify(currentUser));
-                showNotice('Hoş Geldiniz', `Tekrar hoş geldiniz, ${currentUser.fullName}!`, '👋');
-                initApp();
-            } else {
-                showNotice('Giriş Başarısız', 'Kullanıcı adı veya şifreniz hatalı!', '⚠️');
-            }
-        });
-
-        // OTURUM BAŞLATMA
-        function initApp() {
-            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-            document.getElementById('mainNav').style.display = 'flex';
-            document.getElementById('navUsername').innerText = currentUser.fullName;
-            switchTab('write');
-            renderPrivateFeed();
-        }
-
-        // ÇIKIŞ YAP
-        function logout() {
-            currentUser = null;
-            localStorage.removeItem('app_current_user');
-            document.getElementById('mainNav').style.display = 'none';
-            showAuth();
-            showNotice('Çıkış Yapıldı', 'Güvenli bir şekilde çıkış yaptınız.', '🔒');
-        }
-
-        function showAuth() {
-            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-            document.getElementById('authSection').classList.add('active');
-        }
-
-        // GÜNLÜK KAYDETME (CANLI TARİH DÜZELTMELİ)
-        document.getElementById('journalForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-
-            // Gerçek Zamanlı Gün, Ay, Yıl ve Saat Bilgisi
-            const now = new Date();
-            const formattedDate = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }) + 
-                                  " • " + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
-
-            const newEntry = {
-                id: Date.now().toString(),
-                userId: currentUser.id,
-                author: currentUser.fullName,
-                title: document.getElementById('entryTitle').value,
-                content: document.getElementById('entryContent').value,
-                mood: document.getElementById('entryMood').value,
-                date: formattedDate,
-                timestamp: Date.now(),
-                isPublic: document.getElementById('isPublic').checked,
-                likes: 0
-            };
-
-            // Yerel Hafızaya Kaydet
-            localEntries.unshift(newEntry);
-            localStorage.setItem('app_entries', JSON.stringify(localEntries));
-
-            // Eğer Topluluğa Açık İşaretlendiyse Firebase Buluta Gönder
-            if (newEntry.isPublic && db) {
-                db.collection("public_entries").doc(newEntry.id).set(newEntry)
-                .catch(err => console.log("Cloud sync error:", err));
-            }
-
-            document.getElementById('entryTitle').value = '';
-            document.getElementById('entryContent').value = '';
-            document.getElementById('isPublic').checked = false;
-
-            renderPrivateFeed();
-            showNotice('Başarılı', 'Günlüğünüz zaman damgasıyla birlikte kaydedildi!', '📝');
-            switchTab('private');
-        });
-
-        // ÖZEL GÜNLÜKLERİ RENDER ET
-        function renderPrivateFeed() {
-            const privateFeed = document.getElementById('privateFeed');
-            privateFeed.innerHTML = '';
-
-            localEntries.forEach(entry => {
-                if (currentUser && entry.userId === currentUser.id) {
-                    privateFeed.innerHTML += `
-                        <div class="card">
-                            <div>
-                                <div class="card-header">
-                                    <span>${entry.mood}</span>
-                                    <span class="card-date">📅 ${entry.date}</span>
-                                </div>
-                                <div class="card-title">${escapeHTML(entry.title)}</div>
-                                <div class="card-content">${escapeHTML(entry.content)}</div>
-                            </div>
-                            <div class="card-footer">
-                                <span>✍️ ${escapeHTML(entry.author)}</span>
-                                <div class="card-actions">
-                                    ${entry.isPublic ? `<span style="color:#10b981;">🌍 Toplulukta</span>` : `<span style="color:#f59e0b;">🔒 Gizli</span>`}
-                                    <button class="btn-delete" onclick="deleteEntry('${entry.id}')">🗑️ Sil</button>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                }
-            });
-        }
-
-        // FIREBASE BULUT KANALI İLE TOPLULUK AKIŞINI CANLI DİNLEME
-        function listenPublicCloudEntries() {
-            const publicFeed = document.getElementById('publicFeed');
-
-            if (!db) {
-                renderPublicFallback();
-                return;
-            }
-
-            db.collection("public_entries").onSnapshot((snapshot) => {
-                publicFeed.innerHTML = '';
-                if (snapshot.empty) {
-                    publicFeed.innerHTML = '<p style="color:var(--text-muted);">Henüz toplulukta paylaşılan bir günlük yok.</p>';
-                    return;
-                }
-
-                snapshot.forEach((doc) => {
-                    const entry = doc.data();
-                    const isMyPost = currentUser && (entry.userId === currentUser.id);
-
-                    publicFeed.innerHTML += `
-                        <div class="card">
-                            <div>
-                                <div class="card-header">
-                                    <span>${entry.mood}</span>
-                                    <span class="card-date">📅 ${entry.date}</span>
-                                </div>
-                                <div class="card-title">${escapeHTML(entry.title)}</div>
-                                <div class="card-content">${escapeHTML(entry.content)}</div>
-                            </div>
-                            <div class="card-footer">
-                                <span>✍️ ${escapeHTML(entry.author)}</span>
-                                <div class="card-actions">
-                                    <button class="btn-like" onclick="likeCloudEntry('${entry.id}', ${entry.likes || 0})">❤️ ${entry.likes || 0}</button>
-                                    ${isMyPost ? `<button class="btn-delete" onclick="deleteCloudEntry('${entry.id}')">🗑️ Sil</button>` : ''}
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                });
-            }, (err) => {
-                console.log("Firebase bağlantı hatası, yerel mod gösteriliyor.");
-                renderPublicFallback();
-            });
-        }
-
-        function renderPublicFallback() {
-            const publicFeed = document.getElementById('publicFeed');
-            publicFeed.innerHTML = '';
-            localEntries.filter(e => e.isPublic).forEach(entry => {
-                publicFeed.innerHTML += `
-                    <div class="card">
-                        <div>
-                            <div class="card-header">
-                                <span>${entry.mood}</span>
-                                <span class="card-date">📅 ${entry.date}</span>
-                            </div>
-                            <div class="card-title">${escapeHTML(entry.title)}</div>
-                            <div class="card-content">${escapeHTML(entry.content)}</div>
-                        </div>
-                        <div class="card-footer">
-                            <span>✍️ ${escapeHTML(entry.author)}</span>
-                            <button class="btn-like" onclick="likeLocalEntry('${entry.id}')">❤️ ${entry.likes || 0}</button>
-                        </div>
-                    </div>
-                `;
-            });
-        }
-
-        // TOPLULUK GÖNDERİSİNİ SİLME
-        function deleteCloudEntry(id) {
-            if (confirm('Bu topluluk gönderisini silmek istediğinizden emin misiniz?')) {
-                if (db) {
-                    db.collection("public_entries").doc(id).delete()
-                    .then(() => showNotice('Silindi', 'Gönderi topluluktan kaldırıldı.', '🗑️'))
-                    .catch(err => console.log("Silme hatası:", err));
-                }
-                deleteEntry(id);
-            }
-        }
-
-        // KİŞİSEL GÜNLÜK SİLME
-        function deleteEntry(id) {
-            localEntries = localEntries.filter(e => e.id !== id);
-            localStorage.setItem('app_entries', JSON.stringify(localEntries));
-            renderPrivateFeed();
-        }
-
-        // BEĞENİ YÜKSELTME
-        function likeCloudEntry(id, currentLikes) {
-            if (db) {
-                db.collection("public_entries").doc(id).update({
-                    likes: currentLikes + 1
-                });
-            }
-        }
-
-        function likeLocalEntry(id) {
-            const entry = localEntries.find(e => e.id === id);
-            if (entry) {
-                entry.likes = (entry.likes || 0) + 1;
-                localStorage.setItem('app_entries', JSON.stringify(localEntries));
-                renderPublicFallback();
-            }
-        }
-
-        // SEKME GEÇİŞİ
-        function switchTab(tabName) {
-            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-            document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
-
-            if (tabName === 'write') {
-                document.querySelectorAll('.nav-btn')[0].classList.add('active');
-                document.getElementById('writeSection').classList.add('active');
-            } else if (tabName === 'private') {
-                document.querySelectorAll('.nav-btn')[1].classList.add('active');
-                document.getElementById('privateSection').classList.add('active');
-            } else if (tabName === 'public') {
-                document.querySelectorAll('.nav-btn')[2].classList.add('active');
-                document.getElementById('publicSection').classList.add('active');
-            }
-        }
-
-        function escapeHTML(str) {
-            return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
-        }
-    </script>
-</body>
-</html>
