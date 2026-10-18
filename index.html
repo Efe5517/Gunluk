@@ -347,14 +347,16 @@
             initApp();
         });
 
-        // GİRİŞ YAPMA
+        // GİRİŞ YAPMA (HATA KORUMALI & ÇİFT KATMANLI)
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const username = document.getElementById('loginUsername').value.trim().toLowerCase();
             const password = document.getElementById('loginPassword').value;
 
+            // 1. Önce yerel hafızadan kontrol et
             let user = users.find(u => u.username.toLowerCase() === username && u.password === password);
 
+            // 2. Yerelde bulunamadıysa ve Firebase aktifse buluttan çek
             if (!user && db) {
                 try {
                     const userDoc = await db.collection("users").doc(username).get();
@@ -367,7 +369,7 @@
                         }
                     }
                 } catch (err) {
-                    console.warn("Bulut giriş hatası:", err);
+                    console.warn("Bulut giriş sorgusu atlandı:", err);
                 }
             }
 
@@ -377,7 +379,7 @@
                 showNotice('Hoş Geldiniz', `Tekrar hoş geldiniz, ${currentUser.fullName}!`, '👋');
                 initApp();
             } else {
-                showNotice('Giriş Başarısız', 'Kullanıcı adı veya şifreniz hatalı!', '⚠️');
+                showNotice('Giriş Başarısız', 'Kullanıcı adı veya şifreniz hatalı! Eğer henüz kayıt olmadıysanız lütfen "Kayıt Ol" sekmesinden hesap oluşturun.', '⚠️');
             }
         });
 
@@ -438,138 +440,4 @@
             document.getElementById('isPublic').checked = false;
 
             renderPrivateFeed();
-            showNotice('Başarılı', 'Günlüğünüz zaman damgasıyla birlikte kaydedildi!', '📝');
-            switchTab('private');
-        });
-
-        // ÖZEL GÜNLÜKLERİ GÖSTER
-        function renderPrivateFeed() {
-            const privateFeed = document.getElementById('privateFeed');
-            privateFeed.innerHTML = '';
-
-            localEntries.forEach(entry => {
-                if (currentUser && entry.userId === currentUser.id) {
-                    privateFeed.innerHTML += `
-                        <div class="card">
-                            <div>
-                                <div class="card-header">
-                                    <span>${entry.mood}</span>
-                                    <span class="card-date">📅 ${entry.date}</span>
-                                </div>
-                                <div class="card-title">${escapeHTML(entry.title)}</div>
-                                <div class="card-content">${escapeHTML(entry.content)}</div>
-                            </div>
-                            <div class="card-footer">
-                                <span>✍️ ${escapeHTML(entry.author)}</span>
-                                <div class="card-actions">
-                                    ${entry.isPublic ? `<span style="color:#10b981;">🌍 Toplulukta</span>` : `<span style="color:#f59e0b;">🔒 Gizli</span>`}
-                                    <button class="btn-delete" onclick="deleteEntry('${entry.id}')">🗑️ Sil</button>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                }
-            });
-        }
-
-        // FIREBASE İLE TOPLULUK AKIŞINI CANLI DİNLEME
-        function listenPublicCloudEntries() {
-            const publicFeed = document.getElementById('publicFeed');
-
-            if (!db) {
-                renderPublicFallback();
-                return;
-            }
-
-            db.collection("public_entries").onSnapshot((snapshot) => {
-                publicFeed.innerHTML = '';
-                if (snapshot.empty) {
-                    publicFeed.innerHTML = '<p style="color:var(--text-muted);">Henüz toplulukta paylaşılan bir günlük yok.</p>';
-                    return;
-                }
-
-                snapshot.forEach((doc) => {
-                    const entry = doc.data();
-                    const isMyPost = currentUser && (entry.userId === currentUser.id);
-
-                    publicFeed.innerHTML += `
-                        <div class="card">
-                            <div>
-                                <div class="card-header">
-                                    <span>${entry.mood}</span>
-                                    <span class="card-date">📅 ${entry.date}</span>
-                                </div>
-                                <div class="card-title">${escapeHTML(entry.title)}</div>
-                                <div class="card-content">${escapeHTML(entry.content)}</div>
-                            </div>
-                            <div class="card-footer">
-                                <span>✍️ ${escapeHTML(entry.author)}</span>
-                                <div class="card-actions">
-                                    <button class="btn-like" onclick="likeCloudEntry('${entry.id}', ${entry.likes || 0})">❤️ ${entry.likes || 0}</button>
-                                    ${isMyPost ? `<button class="btn-delete" onclick="deleteCloudEntry('${entry.id}')">🗑️ Sil</button>` : ''}
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                });
-            }, (err) => {
-                console.log("Firebase hatası, yerel mod gösteriliyor:", err);
-                renderPublicFallback();
-            });
-        }
-
-        function renderPublicFallback() {
-            const publicFeed = document.getElementById('publicFeed');
-            publicFeed.innerHTML = '';
-            localEntries.filter(e => e.isPublic).forEach(entry => {
-                publicFeed.innerHTML += `
-                    <div class="card">
-                        <div>
-                            <div class="card-header">
-                                <span>${entry.mood}</span>
-                                <span class="card-date">📅 ${entry.date}</span>
-                            </div>
-                            <div class="card-title">${escapeHTML(entry.title)}</div>
-                            <div class="card-content">${escapeHTML(entry.content)}</div>
-                        </div>
-                        <div class="card-footer">
-                            <span>✍️ ${escapeHTML(entry.author)}</span>
-                            <button class="btn-like" onclick="likeLocalEntry('${entry.id}')">❤️ ${entry.likes || 0}</button>
-                        </div>
-                    </div>
-                `;
-            });
-        }
-
-        // TOPLULUK GÖNDERİSİ SİLME
-        function deleteCloudEntry(id) {
-            if (confirm('Bu topluluk gönderisini silmek istediğinizden emin misiniz?')) {
-                if (db) {
-                    db.collection("public_entries").doc(id).delete()
-                    .then(() => showNotice('Silindi', 'Gönderi topluluktan kaldırıldı.', '🗑️'))
-                    .catch(err => console.log("Silme hatası:", err));
-                }
-                deleteEntry(id);
-            }
-        }
-
-        // KİŞİSEL GÜNLÜK SİLME
-        function deleteEntry(id) {
-            localEntries = localEntries.filter(e => e.id !== id);
-            localStorage.setItem('app_entries', JSON.stringify(localEntries));
-            renderPrivateFeed();
-        }
-
-        // BEĞENİ YÜKSELTME
-        function likeCloudEntry(id, currentLikes) {
-            if (db) {
-                db.collection("public_entries").doc(id).update({
-                    likes: currentLikes + 1
-                });
-            }
-        }
-
-        function likeLocalEntry(id) {
-            const entry = localEntries.find(e => e.id === id);
-            if (entry) {
-                entry.likes = (entry.
+            showNotice('
