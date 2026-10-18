@@ -145,17 +145,19 @@
         <div id="authSection" class="section active">
             <div class="auth-container">
                 <div class="auth-tabs">
-                    <div id="tabLogin" class="auth-tab active" onclick="switchAuthTab('login')">Giriş Yap</div>
-                    <div id="tabRegister" class="auth-tab" onclick="switchAuthTab('register')">Kayıt Ol</div>
+                    <button type="button" id="tabLogin" class="auth-tab active" onclick="showForm('login')">Giriş Yap</button>
+                    <button type="button" id="tabRegister" class="auth-tab" onclick="showForm('register')">Kayıt Ol</button>
                 </div>
 
-                <form id="loginForm">
+                <!-- GİRİŞ FORMU -->
+                <form id="loginForm" onsubmit="handleLogin(event)">
                     <input type="text" id="loginUsername" placeholder="Kullanıcı Adı" required>
                     <input type="password" id="loginPassword" placeholder="Şifre" required>
                     <button type="submit" class="btn-submit">Oturum Aç</button>
                 </form>
 
-                <form id="registerForm" style="display: none;">
+                <!-- KAYIT FORMU -->
+                <form id="registerForm" style="display: none;" onsubmit="handleRegister(event)">
                     <input type="text" id="regFullName" placeholder="Ad Soyad" required>
                     <input type="text" id="regUsername" placeholder="Kullanıcı Adı" required>
                     <input type="password" id="regPassword" placeholder="Güvenli Şifre" required>
@@ -168,7 +170,7 @@
         <div id="writeSection" class="section">
             <div class="editor-card">
                 <h2 style="margin-bottom: 15px; color: var(--accent-purple);">✍️ Yeni Günlük Ekle</h2>
-                <form id="journalForm">
+                <form id="journalForm" onsubmit="handleJournalSubmit(event)">
                     <input type="text" id="entryTitle" placeholder="Günlük Başlığı..." required>
                     
                     <div style="display: flex; gap: 15px; flex-wrap: wrap;">
@@ -236,10 +238,10 @@
 
         let db = null;
         try {
-            if (!firebase.apps.length) {
+            if (typeof firebase !== 'undefined' && !firebase.apps.length) {
                 firebase.initializeApp(firebaseConfig);
+                db = firebase.firestore();
             }
-            db = firebase.firestore();
         } catch (e) {
             console.warn("Firebase başlatılamadı:", e);
         }
@@ -268,28 +270,28 @@
             document.getElementById('customModal').style.display = 'none';
         }
 
-        // SEKMELER ARASI GEÇİŞ (GARANTİLİ ÇALIŞAN YAPILANMA)
-        function switchAuthTab(tabType) {
-            const tabLogin = document.getElementById('tabLogin');
-            const tabRegister = document.getElementById('tabRegister');
+        // KİLİTLENMEYEN SEKMELER
+        function showForm(type) {
             const loginForm = document.getElementById('loginForm');
             const registerForm = document.getElementById('registerForm');
+            const tabLogin = document.getElementById('tabLogin');
+            const tabRegister = document.getElementById('tabRegister');
 
-            if (tabType === 'register') {
-                tabRegister.classList.add('active');
-                tabLogin.classList.remove('active');
-                registerForm.style.display = 'block';
+            if (type === 'register') {
                 loginForm.style.display = 'none';
+                registerForm.style.display = 'block';
+                tabLogin.classList.remove('active');
+                tabRegister.classList.add('active');
             } else {
-                tabLogin.classList.add('active');
-                tabRegister.classList.remove('active');
-                loginForm.style.display = 'block';
                 registerForm.style.display = 'none';
+                loginForm.style.display = 'block';
+                tabRegister.classList.remove('active');
+                tabLogin.classList.add('active');
             }
         }
 
-        // KAYIT FORMU
-        document.getElementById('registerForm').onsubmit = async function(e) {
+        // KAYIT
+        async function handleRegister(e) {
             e.preventDefault();
             const fullName = document.getElementById('regFullName').value.trim();
             const username = document.getElementById('regUsername').value.trim().toLowerCase();
@@ -301,22 +303,13 @@
                 return;
             }
 
-            if (db) {
-                try {
-                    const userDoc = await db.collection("users").doc(username).get();
-                    if (userDoc.exists) {
-                        showNotice('Hata', 'Bu kullanıcı adı bulut veritabanında zaten kayıtlı!', '❌');
-                        return;
-                    }
-                } catch (err) {
-                    console.warn("Bulut kontrolü atlandı:", err);
-                }
-            }
-
             const newUser = { id: Date.now(), fullName, username, password, pin };
 
             if (db) {
-                db.collection("users").doc(username).set(newUser).catch(err => console.error(err));
+                try {
+                    // Firebase kayıt
+                    db.collection("users").doc(username).set(newUser).catch(() => {});
+                } catch(err) {}
             }
 
             users.push(newUser);
@@ -325,14 +318,230 @@
             currentUser = newUser;
             localStorage.setItem('app_current_user', JSON.stringify(currentUser));
 
-            showNotice('Tebrikler!', 'Hesabınız oluşturuldu ve giriş yapıldı.', '🎉');
+            showNotice('Tebrikler!', 'Hesabınız oluşturuldu.', '🎉');
             initApp();
-        };
+        }
 
-        // GİRİŞ FORMU
-        document.getElementById('loginForm').onsubmit = async function(e) {
+        // GİRİŞ
+        async function handleLogin(e) {
             e.preventDefault();
             const username = document.getElementById('loginUsername').value.trim().toLowerCase();
             const password = document.getElementById('loginPassword').value;
 
-            let user = users.find(u => u.username.toLowerCase() === username && u.password ===
+            let user = users.find(u => u.username.toLowerCase() === username && u.password === password);
+
+            if (user) {
+                currentUser = user;
+                localStorage.setItem('app_current_user', JSON.stringify(currentUser));
+                showNotice('Hoş Geldiniz', `Tekrar hoş geldiniz, ${currentUser.fullName}!`, '👋');
+                initApp();
+            } else {
+                showNotice('Giriş Başarısız', 'Kullanıcı adı veya şifre hatalı! Henüz hesabınız yoksa "Kayıt Ol" sekmesinden hesap oluşturabilirsiniz.', '⚠️');
+            }
+        }
+
+        function initApp() {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById('mainNav').style.display = 'flex';
+            document.getElementById('navUsername').innerText = currentUser.fullName;
+            switchTab('write');
+            renderPrivateFeed();
+        }
+
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('app_current_user');
+            document.getElementById('mainNav').style.display = 'none';
+            showAuth();
+            showNotice('Çıkış Yapıldı', 'Güvenli bir şekilde çıkış yaptınız.', '🔒');
+        }
+
+        function showAuth() {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById('authSection').classList.add('active');
+        }
+
+        function handleJournalSubmit(e) {
+            e.preventDefault();
+
+            const now = new Date();
+            const formattedDate = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }) + 
+                                  " • " + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+
+            const newEntry = {
+                id: Date.now().toString(),
+                userId: currentUser.id,
+                author: currentUser.fullName,
+                title: document.getElementById('entryTitle').value,
+                content: document.getElementById('entryContent').value,
+                mood: document.getElementById('entryMood').value,
+                date: formattedDate,
+                timestamp: Date.now(),
+                isPublic: document.getElementById('isPublic').checked,
+                likes: 0
+            };
+
+            localEntries.unshift(newEntry);
+            localStorage.setItem('app_entries', JSON.stringify(localEntries));
+
+            if (newEntry.isPublic && db) {
+                db.collection("public_entries").doc(newEntry.id).set(newEntry).catch(err => console.log(err));
+            }
+
+            document.getElementById('entryTitle').value = '';
+            document.getElementById('entryContent').value = '';
+            document.getElementById('isPublic').checked = false;
+
+            renderPrivateFeed();
+            showNotice('Başarılı', 'Günlüğünüz kaydedildi!', '📝');
+            switchTab('private');
+        }
+
+        function renderPrivateFeed() {
+            const privateFeed = document.getElementById('privateFeed');
+            privateFeed.innerHTML = '';
+
+            localEntries.forEach(entry => {
+                if (currentUser && entry.userId === currentUser.id) {
+                    privateFeed.innerHTML += `
+                        <div class="card">
+                            <div>
+                                <div class="card-header">
+                                    <span>${entry.mood}</span>
+                                    <span class="card-date">📅 ${entry.date}</span>
+                                </div>
+                                <div class="card-title">${escapeHTML(entry.title)}</div>
+                                <div class="card-content">${escapeHTML(entry.content)}</div>
+                            </div>
+                            <div class="card-footer">
+                                <span>✍️ ${escapeHTML(entry.author)}</span>
+                                <div class="card-actions">
+                                    ${entry.isPublic ? `<span style="color:#10b981;">🌍 Toplulukta</span>` : `<span style="color:#f59e0b;">🔒 Gizli</span>`}
+                                    <button class="btn-delete" onclick="deleteEntry('${entry.id}')">🗑️ Sil</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+        }
+
+        function listenPublicCloudEntries() {
+            const publicFeed = document.getElementById('publicFeed');
+            if (!db) { renderPublicFallback(); return; }
+
+            try {
+                db.collection("public_entries").onSnapshot((snapshot) => {
+                    publicFeed.innerHTML = '';
+                    if (snapshot.empty) {
+                        publicFeed.innerHTML = '<p style="color:var(--text-muted);">Henüz toplulukta paylaşılan bir günlük yok.</p>';
+                        return;
+                    }
+
+                    snapshot.forEach((doc) => {
+                        const entry = doc.data();
+                        const isMyPost = currentUser && (entry.userId === currentUser.id);
+
+                        publicFeed.innerHTML += `
+                            <div class="card">
+                                <div>
+                                    <div class="card-header">
+                                        <span>${entry.mood}</span>
+                                        <span class="card-date">📅 ${entry.date}</span>
+                                    </div>
+                                    <div class="card-title">${escapeHTML(entry.title)}</div>
+                                    <div class="card-content">${escapeHTML(entry.content)}</div>
+                                </div>
+                                <div class="card-footer">
+                                    <span>✍️ ${escapeHTML(entry.author)}</span>
+                                    <div class="card-actions">
+                                        <button class="btn-like" onclick="likeCloudEntry('${entry.id}', ${entry.likes || 0})">❤️ ${entry.likes || 0}</button>
+                                        ${isMyPost ? `<button class="btn-delete" onclick="deleteCloudEntry('${entry.id}')">🗑️ Sil</button>` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }, (err) => {
+                    renderPublicFallback();
+                });
+            } catch(e) {
+                renderPublicFallback();
+            }
+        }
+
+        function renderPublicFallback() {
+            const publicFeed = document.getElementById('publicFeed');
+            publicFeed.innerHTML = '';
+            localEntries.filter(e => e.isPublic).forEach(entry => {
+                publicFeed.innerHTML += `
+                    <div class="card">
+                        <div>
+                            <div class="card-header">
+                                <span>${entry.mood}</span>
+                                <span class="card-date">📅 ${entry.date}</span>
+                            </div>
+                            <div class="card-title">${escapeHTML(entry.title)}</div>
+                            <div class="card-content">${escapeHTML(entry.content)}</div>
+                        </div>
+                        <div class="card-footer">
+                            <span>✍️ ${escapeHTML(entry.author)}</span>
+                            <button class="btn-like" onclick="likeLocalEntry('${entry.id}')">❤️ ${entry.likes || 0}</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function deleteCloudEntry(id) {
+            if (confirm('Bu topluluk gönderisini silmek istediğinizden emin misiniz?')) {
+                if (db) {
+                    db.collection("public_entries").doc(id).delete().catch(err => console.log(err));
+                }
+                deleteEntry(id);
+            }
+        }
+
+        function deleteEntry(id) {
+            localEntries = localEntries.filter(e => e.id !== id);
+            localStorage.setItem('app_entries', JSON.stringify(localEntries));
+            renderPrivateFeed();
+        }
+
+        function likeCloudEntry(id, currentLikes) {
+            if (db) {
+                db.collection("public_entries").doc(id).update({ likes: currentLikes + 1 });
+            }
+        }
+
+        function likeLocalEntry(id) {
+            const entry = localEntries.find(e => e.id === id);
+            if (entry) {
+                entry.likes = (entry.likes || 0) + 1;
+                localStorage.setItem('app_entries', JSON.stringify(localEntries));
+                renderPublicFallback();
+            }
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+
+            if (tabName === 'write') {
+                document.querySelectorAll('.nav-btn')[0].classList.add('active');
+                document.getElementById('writeSection').classList.add('active');
+            } else if (tabName === 'private') {
+                document.querySelectorAll('.nav-btn')[1].classList.add('active');
+                document.getElementById('privateSection').classList.add('active');
+            } else if (tabName === 'public') {
+                document.querySelectorAll('.nav-btn')[2].classList.add('active');
+                document.getElementById('publicSection').classList.add('active');
+            }
+        }
+
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
+        }
+    </script>
+</body>
+</html>
