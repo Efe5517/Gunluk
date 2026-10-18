@@ -26,7 +26,6 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: var(--bg-dark); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; }
 
-        /* HEADER & NAVIGATION */
         header {
             background: rgba(30, 41, 59, 0.9);
             backdrop-filter: blur(10px);
@@ -57,12 +56,11 @@
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* AUTH CONTAINER */
         .auth-container {
             max-width: 420px; margin: 40px auto; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.5);
         }
         .auth-tabs { display: flex; border-bottom: 1px solid var(--border-color); margin-bottom: 20px; }
-        .auth-tab { flex: 1; padding: 10px; text-align: center; cursor: pointer; color: var(--text-muted); font-weight: bold; border-bottom: 2px solid transparent; }
+        .auth-tab { flex: 1; padding: 12px; text-align: center; cursor: pointer; color: var(--text-muted); font-weight: bold; border-bottom: 2px solid transparent; user-select: none; }
         .auth-tab.active { color: #fff; border-bottom-color: var(--accent-purple); }
 
         input[type="text"], input[type="password"], textarea, select {
@@ -76,7 +74,6 @@
         }
         .btn-submit:hover { opacity: 0.9; }
 
-        /* KARTLAR VE İÇERİK */
         .editor-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
         .card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; transition: 0.3s; position: relative; }
@@ -92,14 +89,12 @@
         .btn-delete { background: rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); padding: 4px 8px; border-radius: 6px; cursor: pointer; font-size: 0.75rem; font-weight: bold; transition: 0.2s; }
         .btn-delete:hover { background: var(--danger); color: white; }
 
-        /* TAKVİM BÖLÜMÜ */
         .calendar-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 20px; margin-bottom: 25px; text-align: center; }
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-top: 15px; }
         .cal-day-name { font-size: 0.8rem; color: var(--text-muted); font-weight: bold; }
         .cal-day { background: var(--bg-input); padding: 10px; border-radius: 8px; font-size: 0.85rem; border: 1px solid transparent; }
         .cal-day.has-entry { border-color: var(--accent-purple); background: rgba(139, 92, 246, 0.2); font-weight: bold; color: #fff; }
 
-        /* ÖZELLEŞTİRİLMİŞ BİLDİRİM MODALI (POPUP) */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(5px);
@@ -121,7 +116,6 @@
 </head>
 <body>
 
-    <!-- BİLDİRİM POPUP KUTUSU -->
     <div id="customModal" class="modal-overlay">
         <div class="modal-box">
             <div id="modalIcon" class="modal-icon">🔔</div>
@@ -131,7 +125,6 @@
         </div>
     </div>
 
-    <!-- HEADER -->
     <header>
         <div class="header-container">
             <div class="logo">📖 Günlüğüm & Topluluk</div>
@@ -149,7 +142,6 @@
 
     <main>
 
-        <!-- GİRİŞ VE KAYIT EKRANI -->
         <div id="authSection" class="section active">
             <div class="auth-container">
                 <div class="auth-tabs">
@@ -157,14 +149,12 @@
                     <div id="tabRegister" class="auth-tab" onclick="switchAuthTab('register')">Kayıt Ol</div>
                 </div>
 
-                <!-- GİRİŞ FORMU -->
                 <form id="loginForm">
                     <input type="text" id="loginUsername" placeholder="Kullanıcı Adı" required>
                     <input type="password" id="loginPassword" placeholder="Şifre" required>
                     <button type="submit" class="btn-submit">Oturum Aç</button>
                 </form>
 
-                <!-- KAYIT FORMU -->
                 <form id="registerForm" style="display: none;">
                     <input type="text" id="regFullName" placeholder="Ad Soyad" required>
                     <input type="text" id="regUsername" placeholder="Kullanıcı Adı" required>
@@ -175,7 +165,6 @@
             </div>
         </div>
 
-        <!-- 1. SEKME: GÜNLÜK YAZMA ALANI -->
         <div id="writeSection" class="section">
             <div class="editor-card">
                 <h2 style="margin-bottom: 15px; color: var(--accent-purple);">✍️ Yeni Günlük Ekle</h2>
@@ -208,7 +197,6 @@
             </div>
         </div>
 
-        <!-- 2. SEKME: ÖZEL GÜNLÜĞÜM VE TAKVİM -->
         <div id="privateSection" class="section">
             <div class="calendar-card">
                 <h3>📅 Günlük Takvimi</h3>
@@ -225,7 +213,6 @@
             <div id="privateFeed" class="grid"></div>
         </div>
 
-        <!-- 3. SEKME: TOPLULUK AKIŞI -->
         <div id="publicSection" class="section">
             <h2 style="margin-bottom: 15px; color: var(--text-muted);">🌍 Toplulukta Paylaşılan Günlükler (Canlı)</h2>
             <div id="publicFeed" class="grid"></div>
@@ -238,7 +225,6 @@
     </footer>
 
     <script>
-        // FIREBASE YAPILANDIRMASI
         const firebaseConfig = {
             apiKey: "AIzaSyCLSBCDDzqYpF6iuddqF9RW1-t8ZuRMhN4",
             authDomain: "gunluk-5caa3.firebaseapp.com",
@@ -248,7 +234,6 @@
             appId: "1:1039478561181:web:1a14d4c1d1faa1d4877774"
         };
 
-        // Firebase Başlatma
         let db = null;
         try {
             if (!firebase.apps.length) {
@@ -259,12 +244,10 @@
             console.warn("Firebase başlatılamadı:", e);
         }
 
-        // DEPOLAMA DEĞİŞKENLERİ
         let users = JSON.parse(localStorage.getItem('app_users')) || [];
         let currentUser = JSON.parse(localStorage.getItem('app_current_user')) || null;
         let localEntries = JSON.parse(localStorage.getItem('app_entries')) || [];
 
-        // SAYFA YÜKLENDİĞİNDE
         window.onload = function() {
             if (currentUser) {
                 initApp();
@@ -274,7 +257,6 @@
             listenPublicCloudEntries();
         };
 
-        // BİLDİRİM POPUP FONKSİYONLARI
         function showNotice(title, text, icon = "🔔") {
             document.getElementById('modalTitle').innerText = title;
             document.getElementById('modalText').innerText = text;
@@ -286,158 +268,71 @@
             document.getElementById('customModal').style.display = 'none';
         }
 
-        // AUTH SEKMELERİ
-        function switchAuthTab(type) {
-            if (type === 'login') {
-                document.getElementById('tabLogin').classList.add('active');
-                document.getElementById('tabRegister').classList.remove('active');
-                document.getElementById('loginForm').style.display = 'block';
-                document.getElementById('registerForm').style.display = 'none';
+        // SEKMELER ARASI GEÇİŞ (GARANTİLİ ÇALIŞAN YAPILANMA)
+        function switchAuthTab(tabType) {
+            const tabLogin = document.getElementById('tabLogin');
+            const tabRegister = document.getElementById('tabRegister');
+            const loginForm = document.getElementById('loginForm');
+            const registerForm = document.getElementById('registerForm');
+
+            if (tabType === 'register') {
+                tabRegister.classList.add('active');
+                tabLogin.classList.remove('active');
+                registerForm.style.display = 'block';
+                loginForm.style.display = 'none';
             } else {
-                document.getElementById('tabRegister').classList.add('active');
-                document.getElementById('tabLogin').classList.remove('active');
-                document.getElementById('registerForm').style.display = 'block';
-                document.getElementById('loginForm').style.display = 'none';
+                tabLogin.classList.add('active');
+                tabRegister.classList.remove('active');
+                loginForm.style.display = 'block';
+                registerForm.style.display = 'none';
             }
         }
 
-        // KAYIT OLMA (KÜRESEL FIREBASE KONTROLLÜ)
-        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+        // KAYIT FORMU
+        document.getElementById('registerForm').onsubmit = async function(e) {
             e.preventDefault();
             const fullName = document.getElementById('regFullName').value.trim();
             const username = document.getElementById('regUsername').value.trim().toLowerCase();
             const password = document.getElementById('regPassword').value;
             const pin = document.getElementById('regPin').value;
 
-            // 1. Yerel Kontrol
             if (users.some(u => u.username.toLowerCase() === username)) {
-                showNotice('Hata', 'Bu kullanıcı adı halihazırda alınmış!', '❌');
+                showNotice('Hata', 'Bu kullanıcı adı yerelde alınmış!', '❌');
                 return;
             }
 
-            // 2. Firebase Bulut Kontrolü
             if (db) {
                 try {
                     const userDoc = await db.collection("users").doc(username).get();
                     if (userDoc.exists) {
-                        showNotice('Hata', 'Bu kullanıcı adı başka bir cihazda alınmış!', '❌');
+                        showNotice('Hata', 'Bu kullanıcı adı bulut veritabanında zaten kayıtlı!', '❌');
                         return;
                     }
                 } catch (err) {
-                    console.warn("Bulut kullanıcı kontrolü atlandı:", err);
+                    console.warn("Bulut kontrolü atlandı:", err);
                 }
             }
 
             const newUser = { id: Date.now(), fullName, username, password, pin };
 
-            // Buluta Kaydet
             if (db) {
-                db.collection("users").doc(username).set(newUser)
-                .catch(err => console.error("Kullanıcı bulut kaydı hatası:", err));
+                db.collection("users").doc(username).set(newUser).catch(err => console.error(err));
             }
 
-            // Yerel Hafızaya Kaydet
             users.push(newUser);
             localStorage.setItem('app_users', JSON.stringify(users));
 
             currentUser = newUser;
             localStorage.setItem('app_current_user', JSON.stringify(currentUser));
 
-            showNotice('Tebrikler!', 'Hesabınız başarıyla oluşturuldu ve bulut veritabanına kaydedildi.', '🎉');
+            showNotice('Tebrikler!', 'Hesabınız oluşturuldu ve giriş yapıldı.', '🎉');
             initApp();
-        });
+        };
 
-        // GİRİŞ YAPMA (HATA KORUMALI & ÇİFT KATMANLI)
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        // GİRİŞ FORMU
+        document.getElementById('loginForm').onsubmit = async function(e) {
             e.preventDefault();
             const username = document.getElementById('loginUsername').value.trim().toLowerCase();
             const password = document.getElementById('loginPassword').value;
 
-            // 1. Önce yerel hafızadan kontrol et
-            let user = users.find(u => u.username.toLowerCase() === username && u.password === password);
-
-            // 2. Yerelde bulunamadıysa ve Firebase aktifse buluttan çek
-            if (!user && db) {
-                try {
-                    const userDoc = await db.collection("users").doc(username).get();
-                    if (userDoc.exists) {
-                        const cloudUser = userDoc.data();
-                        if (cloudUser.password === password) {
-                            user = cloudUser;
-                            users.push(user);
-                            localStorage.setItem('app_users', JSON.stringify(users));
-                        }
-                    }
-                } catch (err) {
-                    console.warn("Bulut giriş sorgusu atlandı:", err);
-                }
-            }
-
-            if (user) {
-                currentUser = user;
-                localStorage.setItem('app_current_user', JSON.stringify(currentUser));
-                showNotice('Hoş Geldiniz', `Tekrar hoş geldiniz, ${currentUser.fullName}!`, '👋');
-                initApp();
-            } else {
-                showNotice('Giriş Başarısız', 'Kullanıcı adı veya şifreniz hatalı! Eğer henüz kayıt olmadıysanız lütfen "Kayıt Ol" sekmesinden hesap oluşturun.', '⚠️');
-            }
-        });
-
-        // UYGULAMAYI BAŞLAT
-        function initApp() {
-            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-            document.getElementById('mainNav').style.display = 'flex';
-            document.getElementById('navUsername').innerText = currentUser.fullName;
-            switchTab('write');
-            renderPrivateFeed();
-        }
-
-        // ÇIKIŞ YAP
-        function logout() {
-            currentUser = null;
-            localStorage.removeItem('app_current_user');
-            document.getElementById('mainNav').style.display = 'none';
-            showAuth();
-            showNotice('Çıkış Yapıldı', 'Güvenli bir şekilde çıkış yaptınız.', '🔒');
-        }
-
-        function showAuth() {
-            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-            document.getElementById('authSection').classList.add('active');
-        }
-
-        // GÜNLÜK KAYDETME
-        document.getElementById('journalForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-
-            const now = new Date();
-            const formattedDate = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }) + 
-                                  " • " + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
-
-            const newEntry = {
-                id: Date.now().toString(),
-                userId: currentUser.id,
-                author: currentUser.fullName,
-                title: document.getElementById('entryTitle').value,
-                content: document.getElementById('entryContent').value,
-                mood: document.getElementById('entryMood').value,
-                date: formattedDate,
-                timestamp: Date.now(),
-                isPublic: document.getElementById('isPublic').checked,
-                likes: 0
-            };
-
-            localEntries.unshift(newEntry);
-            localStorage.setItem('app_entries', JSON.stringify(localEntries));
-
-            if (newEntry.isPublic && db) {
-                db.collection("public_entries").doc(newEntry.id).set(newEntry)
-                .catch(err => console.log("Cloud sync error:", err));
-            }
-
-            document.getElementById('entryTitle').value = '';
-            document.getElementById('entryContent').value = '';
-            document.getElementById('isPublic').checked = false;
-
-            renderPrivateFeed();
-            showNotice('
+            let user = users.find(u => u.username.toLowerCase() === username && u.password ===
