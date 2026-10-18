@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Çevrimiçi Günlük & Topluluk Platformu</title>
     
-    <!-- FIREBASE SDK (COMPAT SÜRÜMLERİ) -->
+    <!-- FIREBASE SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
@@ -59,8 +59,8 @@
         .auth-container {
             max-width: 420px; margin: 40px auto; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.5);
         }
-        .auth-tabs { display: flex; border-bottom: 1px solid var(--border-color); margin-bottom: 20px; }
-        .auth-tab { flex: 1; padding: 12px; text-align: center; cursor: pointer; color: var(--text-muted); font-weight: bold; border-bottom: 2px solid transparent; user-select: none; }
+        .auth-tabs { display: flex; border-bottom: 1px solid var(--border-color); margin-bottom: 20px; gap: 10px; }
+        .auth-tab { flex: 1; padding: 12px; text-align: center; cursor: pointer; color: var(--text-muted); font-weight: bold; border: none; background: none; border-bottom: 2px solid transparent; font-size: 1rem; }
         .auth-tab.active { color: #fff; border-bottom-color: var(--accent-purple); }
 
         input[type="text"], input[type="password"], textarea, select {
@@ -145,32 +145,36 @@
         <div id="authSection" class="section active">
             <div class="auth-container">
                 <div class="auth-tabs">
-                    <button type="button" id="tabLogin" class="auth-tab active" onclick="showForm('login')">Giriş Yap</button>
-                    <button type="button" id="tabRegister" class="auth-tab" onclick="showForm('register')">Kayıt Ol</button>
+                    <button type="button" id="tabLoginBtn" class="auth-tab active" onclick="toggleAuth('login')">Giriş Yap</button>
+                    <button type="button" id="tabRegisterBtn" class="auth-tab" onclick="toggleAuth('register')">Kayıt Ol</button>
                 </div>
 
                 <!-- GİRİŞ FORMU -->
-                <form id="loginForm" onsubmit="handleLogin(event)">
-                    <input type="text" id="loginUsername" placeholder="Kullanıcı Adı" required>
-                    <input type="password" id="loginPassword" placeholder="Şifre" required>
-                    <button type="submit" class="btn-submit">Oturum Aç</button>
-                </form>
+                <div id="loginFormContainer" style="display: block;">
+                    <form onsubmit="handleLoginSubmit(event)">
+                        <input type="text" id="loginUsername" placeholder="Kullanıcı Adı" required>
+                        <input type="password" id="loginPassword" placeholder="Şifre" required>
+                        <button type="submit" id="loginSubmitBtn" class="btn-submit">Oturum Aç</button>
+                    </form>
+                </div>
 
                 <!-- KAYIT FORMU -->
-                <form id="registerForm" style="display: none;" onsubmit="handleRegister(event)">
-                    <input type="text" id="regFullName" placeholder="Ad Soyad" required>
-                    <input type="text" id="regUsername" placeholder="Kullanıcı Adı" required>
-                    <input type="password" id="regPassword" placeholder="Güvenli Şifre" required>
-                    <input type="password" id="regPin" placeholder="4 Haneli Özel PIN Kodu" maxlength="4" required>
-                    <button type="submit" class="btn-submit" style="background: linear-gradient(135deg, var(--success), var(--accent-purple));">Hesap Oluştur</button>
-                </form>
+                <div id="registerFormContainer" style="display: none;">
+                    <form onsubmit="handleRegisterSubmit(event)">
+                        <input type="text" id="regFullName" placeholder="Ad Soyad" required>
+                        <input type="text" id="regUsername" placeholder="Kullanıcı Adı (Benzersiz)" required>
+                        <input type="password" id="regPassword" placeholder="Güvenli Şifre" required>
+                        <input type="password" id="regPin" placeholder="4 Haneli Özel PIN Kodu" maxlength="4" required>
+                        <button type="submit" id="regSubmitBtn" class="btn-submit" style="background: linear-gradient(135deg, var(--success), var(--accent-purple));">Hesap Oluştur</button>
+                    </form>
+                </div>
             </div>
         </div>
 
         <div id="writeSection" class="section">
             <div class="editor-card">
                 <h2 style="margin-bottom: 15px; color: var(--accent-purple);">✍️ Yeni Günlük Ekle</h2>
-                <form id="journalForm" onsubmit="handleJournalSubmit(event)">
+                <form onsubmit="handleJournalSubmit(event)">
                     <input type="text" id="entryTitle" placeholder="Günlük Başlığı..." required>
                     
                     <div style="display: flex; gap: 15px; flex-wrap: wrap;">
@@ -270,73 +274,123 @@
             document.getElementById('customModal').style.display = 'none';
         }
 
-        // KİLİTLENMEYEN SEKMELER
-        function showForm(type) {
-            const loginForm = document.getElementById('loginForm');
-            const registerForm = document.getElementById('registerForm');
-            const tabLogin = document.getElementById('tabLogin');
-            const tabRegister = document.getElementById('tabRegister');
+        function toggleAuth(mode) {
+            const loginBox = document.getElementById('loginFormContainer');
+            const regBox = document.getElementById('registerFormContainer');
+            const loginBtn = document.getElementById('tabLoginBtn');
+            const regBtn = document.getElementById('tabRegisterBtn');
 
-            if (type === 'register') {
-                loginForm.style.display = 'none';
-                registerForm.style.display = 'block';
-                tabLogin.classList.remove('active');
-                tabRegister.classList.add('active');
+            if (mode === 'register') {
+                loginBox.style.display = 'none';
+                regBox.style.display = 'block';
+                loginBtn.classList.remove('active');
+                regBtn.classList.add('active');
             } else {
-                registerForm.style.display = 'none';
-                loginForm.style.display = 'block';
-                tabRegister.classList.remove('active');
-                tabLogin.classList.add('active');
+                regBox.style.display = 'none';
+                loginBox.style.display = 'block';
+                regBtn.classList.remove('active');
+                loginBtn.classList.add('active');
             }
         }
 
-        // KAYIT
-        async function handleRegister(e) {
+        // KÜRESEL BENZERSIZ KAYIT (CLOUD-FIRST UNIQUE USERNAME)
+        async function handleRegisterSubmit(e) {
             e.preventDefault();
+            const regBtn = document.getElementById('regSubmitBtn');
+            regBtn.innerText = "Kontrol Ediliyor...";
+            regBtn.disabled = true;
+
             const fullName = document.getElementById('regFullName').value.trim();
             const username = document.getElementById('regUsername').value.trim().toLowerCase();
             const password = document.getElementById('regPassword').value;
             const pin = document.getElementById('regPin').value;
 
-            if (users.some(u => u.username.toLowerCase() === username)) {
-                showNotice('Hata', 'Bu kullanıcı adı yerelde alınmış!', '❌');
+            if (!db) {
+                showNotice('Hata', 'Veritabanı sunucusuna bağlanılamadı. İnternetinizi veya Opera güvenlik ayarlarınızı kontrol edin.', '❌');
+                regBtn.innerText = "Hesap Oluştur";
+                regBtn.disabled = false;
                 return;
             }
 
-            const newUser = { id: Date.now(), fullName, username, password, pin };
+            try {
+                // DOĞRUDAN BULUT VERİTABANINDAN SORGULA
+                const userDoc = await db.collection("users").doc(username).get();
+                
+                if (userDoc.exists) {
+                    showNotice('Kullanıcı Adı Alınmış!', `'${username}' kullanıcı adı başka bir cihazdan halihazırda alınmış. Lütfen farklı bir kullanıcı adı seçin.`, '❌');
+                    regBtn.innerText = "Hesap Oluştur";
+                    regBtn.disabled = false;
+                    return;
+                }
 
-            if (db) {
-                try {
-                    // Firebase kayıt
-                    db.collection("users").doc(username).set(newUser).catch(() => {});
-                } catch(err) {}
+                const newUser = { id: Date.now(), fullName, username, password, pin };
+
+                // BULUTA YAZ
+                await db.collection("users").doc(username).set(newUser);
+
+                // YERELE İŞLE
+                users.push(newUser);
+                localStorage.setItem('app_users', JSON.stringify(users));
+
+                currentUser = newUser;
+                localStorage.setItem('app_current_user', JSON.stringify(currentUser));
+
+                showNotice('Tebrikler!', 'Hesabınız küresel veritabanına kaydedildi.', '🎉');
+                initApp();
+
+            } catch (err) {
+                console.error("Kayıt Hatası:", err);
+                showNotice('Bağlantı Hatası', 'Bulut veritabanı yanıt vermedi. Lütfen internet bağlantınızı kontrol edin.', '⚠️');
+            } finally {
+                regBtn.innerText = "Hesap Oluştur";
+                regBtn.disabled = false;
             }
-
-            users.push(newUser);
-            localStorage.setItem('app_users', JSON.stringify(users));
-
-            currentUser = newUser;
-            localStorage.setItem('app_current_user', JSON.stringify(currentUser));
-
-            showNotice('Tebrikler!', 'Hesabınız oluşturuldu.', '🎉');
-            initApp();
         }
 
-        // GİRİŞ
-        async function handleLogin(e) {
+        // KÜRESEL GİRİŞ İŞLEMİ (CLOUD-FIRST LOGIN)
+        async function handleLoginSubmit(e) {
             e.preventDefault();
+            const loginBtn = document.getElementById('loginSubmitBtn');
+            loginBtn.innerText = "Giriş Yapılıyor...";
+            loginBtn.disabled = true;
+
             const username = document.getElementById('loginUsername').value.trim().toLowerCase();
             const password = document.getElementById('loginPassword').value;
 
-            let user = users.find(u => u.username.toLowerCase() === username && u.password === password);
+            try {
+                let user = null;
 
-            if (user) {
-                currentUser = user;
-                localStorage.setItem('app_current_user', JSON.stringify(currentUser));
-                showNotice('Hoş Geldiniz', `Tekrar hoş geldiniz, ${currentUser.fullName}!`, '👋');
-                initApp();
-            } else {
-                showNotice('Giriş Başarısız', 'Kullanıcı adı veya şifre hatalı! Henüz hesabınız yoksa "Kayıt Ol" sekmesinden hesap oluşturabilirsiniz.', '⚠️');
+                // 1. Önce Bulut Veritabanından Sorgula
+                if (db) {
+                    const userDoc = await db.collection("users").doc(username).get();
+                    if (userDoc.exists) {
+                        const cloudUser = userDoc.data();
+                        if (cloudUser.password === password) {
+                            user = cloudUser;
+                        }
+                    }
+                }
+
+                // 2. Bulutta Yoksa Yerel Hafızayı Kontrol Et
+                if (!user) {
+                    user = users.find(u => u.username.toLowerCase() === username && u.password === password);
+                }
+
+                if (user) {
+                    currentUser = user;
+                    localStorage.setItem('app_current_user', JSON.stringify(currentUser));
+                    showNotice('Hoş Geldiniz', `Tekrar hoş geldiniz, ${currentUser.fullName}!`, '👋');
+                    initApp();
+                } else {
+                    showNotice('Giriş Başarısız', 'Kullanıcı adı veya şifreniz hatalı!', '⚠️');
+                }
+
+            } catch (err) {
+                console.error("Giriş Hatası:", err);
+                showNotice('Bağlantı Hatası', 'Veritabanına ulaşılamadı.', '⚠️');
+            } finally {
+                loginBtn.innerText = "Oturum Aç";
+                loginBtn.disabled = false;
             }
         }
 
@@ -385,7 +439,9 @@
             localStorage.setItem('app_entries', JSON.stringify(localEntries));
 
             if (newEntry.isPublic && db) {
-                db.collection("public_entries").doc(newEntry.id).set(newEntry).catch(err => console.log(err));
+                try {
+                    db.collection("public_entries").doc(newEntry.id).set(newEntry).catch(err => console.log(err));
+                } catch(e){}
             }
 
             document.getElementById('entryTitle').value = '';
@@ -496,7 +552,7 @@
         function deleteCloudEntry(id) {
             if (confirm('Bu topluluk gönderisini silmek istediğinizden emin misiniz?')) {
                 if (db) {
-                    db.collection("public_entries").doc(id).delete().catch(err => console.log(err));
+                    try { db.collection("public_entries").doc(id).delete().catch(err => console.log(err)); } catch(e){}
                 }
                 deleteEntry(id);
             }
@@ -510,7 +566,7 @@
 
         function likeCloudEntry(id, currentLikes) {
             if (db) {
-                db.collection("public_entries").doc(id).update({ likes: currentLikes + 1 });
+                try { db.collection("public_entries").doc(id).update({ likes: currentLikes + 1 }); } catch(e){}
             }
         }
 
