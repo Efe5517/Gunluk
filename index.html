@@ -293,11 +293,11 @@
             }
         }
 
-        // KÜRESEL BENZERSIZ KAYIT (CLOUD-FIRST UNIQUE USERNAME)
+        // KESİN BULUT KONTROLLÜ KAYIT (BULUTTA VARSA %100 REDDET)
         async function handleRegisterSubmit(e) {
             e.preventDefault();
             const regBtn = document.getElementById('regSubmitBtn');
-            regBtn.innerText = "Kontrol Ediliyor...";
+            regBtn.innerText = "Sorgulanıyor...";
             regBtn.disabled = true;
 
             const fullName = document.getElementById('regFullName').value.trim();
@@ -306,29 +306,29 @@
             const pin = document.getElementById('regPin').value;
 
             if (!db) {
-                showNotice('Hata', 'Veritabanı sunucusuna bağlanılamadı. İnternetinizi veya Opera güvenlik ayarlarınızı kontrol edin.', '❌');
+                showNotice('Hata', 'Bulut sunucusuna bağlanılamadı. Lütfen internetinizi kontrol edin.', '❌');
                 regBtn.innerText = "Hesap Oluştur";
                 regBtn.disabled = false;
                 return;
             }
 
             try {
-                // DOĞRUDAN BULUT VERİTABANINDAN SORGULA
+                // 1. Doğrudan Firebase Firestore 'users' koleksiyonunu sorgula
                 const userDoc = await db.collection("users").doc(username).get();
                 
                 if (userDoc.exists) {
-                    showNotice('Kullanıcı Adı Alınmış!', `'${username}' kullanıcı adı başka bir cihazdan halihazırda alınmış. Lütfen farklı bir kullanıcı adı seçin.`, '❌');
+                    showNotice('Kullanıcı Adı Zaten Alınmış!', `'${username}' kullanıcı adı başka bir cihazdan küresel olarak halihazırda alınmış. Lütfen farklı bir kullanıcı adı seçin.`, '❌');
                     regBtn.innerText = "Hesap Oluştur";
                     regBtn.disabled = false;
-                    return;
+                    return; // KAYDI BURADA KESİNLİKLE DURDUR
                 }
 
                 const newUser = { id: Date.now(), fullName, username, password, pin };
 
-                // BULUTA YAZ
+                // 2. Yalnızca kullanıcı adı benzersiz ise buluta kaydet
                 await db.collection("users").doc(username).set(newUser);
 
-                // YERELE İŞLE
+                // 3. Yerel hafızayı güncelle ve oturum aç
                 users.push(newUser);
                 localStorage.setItem('app_users', JSON.stringify(users));
 
@@ -340,18 +340,18 @@
 
             } catch (err) {
                 console.error("Kayıt Hatası:", err);
-                showNotice('Bağlantı Hatası', 'Bulut veritabanı yanıt vermedi. Lütfen internet bağlantınızı kontrol edin.', '⚠️');
+                showNotice('Kayıt Hatası', 'Veritabanı bağlantısı kurulamadı. Lütfen tekrar deneyin.', '⚠️');
             } finally {
                 regBtn.innerText = "Hesap Oluştur";
                 regBtn.disabled = false;
             }
         }
 
-        // KÜRESEL GİRİŞ İŞLEMİ (CLOUD-FIRST LOGIN)
+        // KESİN BULUT KONTROLLÜ GİRİŞ
         async function handleLoginSubmit(e) {
             e.preventDefault();
             const loginBtn = document.getElementById('loginSubmitBtn');
-            loginBtn.innerText = "Giriş Yapılıyor...";
+            loginBtn.innerText = "Oturum Açılıyor...";
             loginBtn.disabled = true;
 
             const username = document.getElementById('loginUsername').value.trim().toLowerCase();
@@ -360,7 +360,7 @@
             try {
                 let user = null;
 
-                // 1. Önce Bulut Veritabanından Sorgula
+                // 1. Önce Bulut Veritabanında Kullanıcıyı Ara
                 if (db) {
                     const userDoc = await db.collection("users").doc(username).get();
                     if (userDoc.exists) {
@@ -371,7 +371,7 @@
                     }
                 }
 
-                // 2. Bulutta Yoksa Yerel Hafızayı Kontrol Et
+                // 2. Eğer Bulut Bağlantısı Yoksa veya Eski Kayıtsa Yerel Hafızadan Bak
                 if (!user) {
                     user = users.find(u => u.username.toLowerCase() === username && u.password === password);
                 }
@@ -382,12 +382,12 @@
                     showNotice('Hoş Geldiniz', `Tekrar hoş geldiniz, ${currentUser.fullName}!`, '👋');
                     initApp();
                 } else {
-                    showNotice('Giriş Başarısız', 'Kullanıcı adı veya şifreniz hatalı!', '⚠️');
+                    showNotice('Giriş Başarısız', 'Kullanıcı adı veya şifreniz hatalı! Eğer henüz kayıt olmadıysanız üstteki "Kayıt Ol" sekmesini kullanın.', '⚠️');
                 }
 
             } catch (err) {
                 console.error("Giriş Hatası:", err);
-                showNotice('Bağlantı Hatası', 'Veritabanına ulaşılamadı.', '⚠️');
+                showNotice('Bağlantı Hatası', 'Veritabanı sorgusu başarısız oldu.', '⚠️');
             } finally {
                 loginBtn.innerText = "Oturum Aç";
                 loginBtn.disabled = false;
@@ -504,7 +504,7 @@
                                     <div class="card-header">
                                         <span>${entry.mood}</span>
                                         <span class="card-date">📅 ${entry.date}</span>
-                                    </div>
+                                </div>
                                     <div class="card-title">${escapeHTML(entry.title)}</div>
                                     <div class="card-content">${escapeHTML(entry.content)}</div>
                                 </div>
