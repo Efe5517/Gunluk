@@ -332,3 +332,244 @@
 
             // Buluta Kaydet
             if (db) {
+                db.collection("users").doc(username).set(newUser)
+                .catch(err => console.error("Kullanıcı bulut kaydı hatası:", err));
+            }
+
+            // Yerel Hafızaya Kaydet
+            users.push(newUser);
+            localStorage.setItem('app_users', JSON.stringify(users));
+
+            currentUser = newUser;
+            localStorage.setItem('app_current_user', JSON.stringify(currentUser));
+
+            showNotice('Tebrikler!', 'Hesabınız başarıyla oluşturuldu ve bulut veritabanına kaydedildi.', '🎉');
+            initApp();
+        });
+
+        // GİRİŞ YAPMA
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('loginUsername').value.trim().toLowerCase();
+            const password = document.getElementById('loginPassword').value;
+
+            let user = users.find(u => u.username.toLowerCase() === username && u.password === password);
+
+            if (!user && db) {
+                try {
+                    const userDoc = await db.collection("users").doc(username).get();
+                    if (userDoc.exists) {
+                        const cloudUser = userDoc.data();
+                        if (cloudUser.password === password) {
+                            user = cloudUser;
+                            users.push(user);
+                            localStorage.setItem('app_users', JSON.stringify(users));
+                        }
+                    }
+                } catch (err) {
+                    console.warn("Bulut giriş hatası:", err);
+                }
+            }
+
+            if (user) {
+                currentUser = user;
+                localStorage.setItem('app_current_user', JSON.stringify(currentUser));
+                showNotice('Hoş Geldiniz', `Tekrar hoş geldiniz, ${currentUser.fullName}!`, '👋');
+                initApp();
+            } else {
+                showNotice('Giriş Başarısız', 'Kullanıcı adı veya şifreniz hatalı!', '⚠️');
+            }
+        });
+
+        // UYGULAMAYI BAŞLAT
+        function initApp() {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById('mainNav').style.display = 'flex';
+            document.getElementById('navUsername').innerText = currentUser.fullName;
+            switchTab('write');
+            renderPrivateFeed();
+        }
+
+        // ÇIKIŞ YAP
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('app_current_user');
+            document.getElementById('mainNav').style.display = 'none';
+            showAuth();
+            showNotice('Çıkış Yapıldı', 'Güvenli bir şekilde çıkış yaptınız.', '🔒');
+        }
+
+        function showAuth() {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById('authSection').classList.add('active');
+        }
+
+        // GÜNLÜK KAYDETME
+        document.getElementById('journalForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const now = new Date();
+            const formattedDate = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }) + 
+                                  " • " + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+
+            const newEntry = {
+                id: Date.now().toString(),
+                userId: currentUser.id,
+                author: currentUser.fullName,
+                title: document.getElementById('entryTitle').value,
+                content: document.getElementById('entryContent').value,
+                mood: document.getElementById('entryMood').value,
+                date: formattedDate,
+                timestamp: Date.now(),
+                isPublic: document.getElementById('isPublic').checked,
+                likes: 0
+            };
+
+            localEntries.unshift(newEntry);
+            localStorage.setItem('app_entries', JSON.stringify(localEntries));
+
+            if (newEntry.isPublic && db) {
+                db.collection("public_entries").doc(newEntry.id).set(newEntry)
+                .catch(err => console.log("Cloud sync error:", err));
+            }
+
+            document.getElementById('entryTitle').value = '';
+            document.getElementById('entryContent').value = '';
+            document.getElementById('isPublic').checked = false;
+
+            renderPrivateFeed();
+            showNotice('Başarılı', 'Günlüğünüz zaman damgasıyla birlikte kaydedildi!', '📝');
+            switchTab('private');
+        });
+
+        // ÖZEL GÜNLÜKLERİ GÖSTER
+        function renderPrivateFeed() {
+            const privateFeed = document.getElementById('privateFeed');
+            privateFeed.innerHTML = '';
+
+            localEntries.forEach(entry => {
+                if (currentUser && entry.userId === currentUser.id) {
+                    privateFeed.innerHTML += `
+                        <div class="card">
+                            <div>
+                                <div class="card-header">
+                                    <span>${entry.mood}</span>
+                                    <span class="card-date">📅 ${entry.date}</span>
+                                </div>
+                                <div class="card-title">${escapeHTML(entry.title)}</div>
+                                <div class="card-content">${escapeHTML(entry.content)}</div>
+                            </div>
+                            <div class="card-footer">
+                                <span>✍️ ${escapeHTML(entry.author)}</span>
+                                <div class="card-actions">
+                                    ${entry.isPublic ? `<span style="color:#10b981;">🌍 Toplulukta</span>` : `<span style="color:#f59e0b;">🔒 Gizli</span>`}
+                                    <button class="btn-delete" onclick="deleteEntry('${entry.id}')">🗑️ Sil</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+        }
+
+        // FIREBASE İLE TOPLULUK AKIŞINI CANLI DİNLEME
+        function listenPublicCloudEntries() {
+            const publicFeed = document.getElementById('publicFeed');
+
+            if (!db) {
+                renderPublicFallback();
+                return;
+            }
+
+            db.collection("public_entries").onSnapshot((snapshot) => {
+                publicFeed.innerHTML = '';
+                if (snapshot.empty) {
+                    publicFeed.innerHTML = '<p style="color:var(--text-muted);">Henüz toplulukta paylaşılan bir günlük yok.</p>';
+                    return;
+                }
+
+                snapshot.forEach((doc) => {
+                    const entry = doc.data();
+                    const isMyPost = currentUser && (entry.userId === currentUser.id);
+
+                    publicFeed.innerHTML += `
+                        <div class="card">
+                            <div>
+                                <div class="card-header">
+                                    <span>${entry.mood}</span>
+                                    <span class="card-date">📅 ${entry.date}</span>
+                                </div>
+                                <div class="card-title">${escapeHTML(entry.title)}</div>
+                                <div class="card-content">${escapeHTML(entry.content)}</div>
+                            </div>
+                            <div class="card-footer">
+                                <span>✍️ ${escapeHTML(entry.author)}</span>
+                                <div class="card-actions">
+                                    <button class="btn-like" onclick="likeCloudEntry('${entry.id}', ${entry.likes || 0})">❤️ ${entry.likes || 0}</button>
+                                    ${isMyPost ? `<button class="btn-delete" onclick="deleteCloudEntry('${entry.id}')">🗑️ Sil</button>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }, (err) => {
+                console.log("Firebase hatası, yerel mod gösteriliyor:", err);
+                renderPublicFallback();
+            });
+        }
+
+        function renderPublicFallback() {
+            const publicFeed = document.getElementById('publicFeed');
+            publicFeed.innerHTML = '';
+            localEntries.filter(e => e.isPublic).forEach(entry => {
+                publicFeed.innerHTML += `
+                    <div class="card">
+                        <div>
+                            <div class="card-header">
+                                <span>${entry.mood}</span>
+                                <span class="card-date">📅 ${entry.date}</span>
+                            </div>
+                            <div class="card-title">${escapeHTML(entry.title)}</div>
+                            <div class="card-content">${escapeHTML(entry.content)}</div>
+                        </div>
+                        <div class="card-footer">
+                            <span>✍️ ${escapeHTML(entry.author)}</span>
+                            <button class="btn-like" onclick="likeLocalEntry('${entry.id}')">❤️ ${entry.likes || 0}</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // TOPLULUK GÖNDERİSİ SİLME
+        function deleteCloudEntry(id) {
+            if (confirm('Bu topluluk gönderisini silmek istediğinizden emin misiniz?')) {
+                if (db) {
+                    db.collection("public_entries").doc(id).delete()
+                    .then(() => showNotice('Silindi', 'Gönderi topluluktan kaldırıldı.', '🗑️'))
+                    .catch(err => console.log("Silme hatası:", err));
+                }
+                deleteEntry(id);
+            }
+        }
+
+        // KİŞİSEL GÜNLÜK SİLME
+        function deleteEntry(id) {
+            localEntries = localEntries.filter(e => e.id !== id);
+            localStorage.setItem('app_entries', JSON.stringify(localEntries));
+            renderPrivateFeed();
+        }
+
+        // BEĞENİ YÜKSELTME
+        function likeCloudEntry(id, currentLikes) {
+            if (db) {
+                db.collection("public_entries").doc(id).update({
+                    likes: currentLikes + 1
+                });
+            }
+        }
+
+        function likeLocalEntry(id) {
+            const entry = localEntries.find(e => e.id === id);
+            if (entry) {
+                entry.likes = (entry.
