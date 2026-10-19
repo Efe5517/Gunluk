@@ -403,7 +403,8 @@
                     regBtn.innerText = "Hesap Oluştur"; regBtn.disabled = false; return;
                 }
 
-                const newUser = { id: Date.now(), fullName, username, password: hashedPassword };
+                // USER ID HER YERDE STRING OLARAK KAYDEDİLİYOR (ÇAPRAZ CİHAZ UYUMLULUĞU İÇİN)
+                const newUser = { id: String(Date.now()), fullName, username, password: hashedPassword };
                 await db.collection("users").doc(username).set(newUser);
 
                 users.push(newUser);
@@ -437,11 +438,14 @@
                         const cloudUser = userDoc.data();
                         if (cloudUser.password === hashedPassword || cloudUser.password === plainPassword) {
                             user = cloudUser;
+                            // ID'nin String olduğundan emin ol
+                            user.id = String(user.id);
                         }
                     }
                 }
                 if (!user) {
                     user = users.find(u => u.username.toLowerCase() === username && (u.password === hashedPassword || u.password === plainPassword));
+                    if (user) user.id = String(user.id);
                 }
 
                 if (user) {
@@ -488,8 +492,8 @@
                                   " • " + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
 
             const newEntry = {
-                id: Date.now().toString(),
-                userId: currentUser.id,
+                id: String(Date.now()),
+                userId: String(currentUser.id), // STRING DÖNÜŞÜMÜ
                 author: escapeHTML(currentUser.fullName),
                 title: escapeHTML(document.getElementById('entryTitle').value),
                 content: escapeHTML(document.getElementById('entryContent').value),
@@ -529,8 +533,9 @@
             }
 
             try {
+                // STRING ID İLE SORGULA
                 db.collection("private_entries")
-                  .where("userId", "==", currentUser.id)
+                  .where("userId", "==", String(currentUser.id))
                   .onSnapshot((snapshot) => {
                       const cloudEntries = [];
                       snapshot.forEach(doc => {
@@ -543,7 +548,8 @@
                       }
                       renderPrivateFeed();
                       renderCalendarAndAnalytics();
-                  }, () => {
+                  }, (err) => {
+                      console.log("Bulut Hatası:", err);
                       renderPrivateFeed();
                       renderCalendarAndAnalytics();
                   });
@@ -559,7 +565,7 @@
             privateFeed.innerHTML = '';
 
             localEntries.forEach(entry => {
-                if (currentUser && entry.userId === currentUser.id) {
+                if (currentUser && String(entry.userId) === String(currentUser.id)) {
                     privateFeed.innerHTML += `
                         <div class="card" onclick="openReaderModal('${escapeQuotes(entry.title)}', '${escapeQuotes(entry.content)}', '${entry.date}', '${escapeQuotes(entry.author)}', '${entry.mood}')">
                             <div>
@@ -600,7 +606,7 @@
                 <div class="cal-day-name">Per</div><div class="cal-day-name">Cum</div><div class="cal-day-name">Cmt</div><div class="cal-day-name">Paz</div>
             `;
 
-            const userEntries = localEntries.filter(e => currentUser && e.userId === currentUser.id);
+            const userEntries = localEntries.filter(e => currentUser && String(e.userId) === String(currentUser.id));
             const entryDays = userEntries.map(e => e.rawDate);
 
             for (let day = 1; day <= daysInMonth; day++) {
@@ -654,7 +660,7 @@
 
                     snapshot.forEach((doc) => {
                         const entry = doc.data();
-                        const isMyPost = currentUser && (entry.userId === currentUser.id);
+                        const isMyPost = currentUser && (String(entry.userId) === String(currentUser.id));
 
                         publicFeed.innerHTML += `
                             <div class="card" onclick="openReaderModal('${escapeQuotes(entry.title)}', '${escapeQuotes(entry.content)}', '${entry.date}', '${escapeQuotes(entry.author)}', '${entry.mood}')">
