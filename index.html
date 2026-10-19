@@ -331,6 +331,7 @@
         let users = JSON.parse(localStorage.getItem('app_users')) || [];
         let currentUser = JSON.parse(localStorage.getItem('app_current_user')) || null;
         let localEntries = JSON.parse(localStorage.getItem('app_entries')) || [];
+        let privateUnsubscribe = null; // CANLI DİNLEYİCİ DEĞİŞKENİ
 
         window.onload = function() {
             if (currentUser) { initApp(); } else { showAuth(); }
@@ -403,7 +404,6 @@
                     regBtn.innerText = "Hesap Oluştur"; regBtn.disabled = false; return;
                 }
 
-                // USER ID HER YERDE STRING OLARAK KAYDEDİLİYOR (ÇAPRAZ CİHAZ UYUMLULUĞU İÇİN)
                 const newUser = { id: String(Date.now()), fullName, username, password: hashedPassword };
                 await db.collection("users").doc(username).set(newUser);
 
@@ -438,7 +438,6 @@
                         const cloudUser = userDoc.data();
                         if (cloudUser.password === hashedPassword || cloudUser.password === plainPassword) {
                             user = cloudUser;
-                            // ID'nin String olduğundan emin ol
                             user.id = String(user.id);
                         }
                     }
@@ -472,6 +471,7 @@
         }
 
         function logout() {
+            if (privateUnsubscribe) privateUnsubscribe();
             currentUser = null;
             localStorage.removeItem('app_current_user');
             document.getElementById('mainNav').style.display = 'none';
@@ -493,7 +493,7 @@
 
             const newEntry = {
                 id: String(Date.now()),
-                userId: String(currentUser.id), // STRING DÖNÜŞÜMÜ
+                userId: String(currentUser.id),
                 author: escapeHTML(currentUser.fullName),
                 title: escapeHTML(document.getElementById('entryTitle').value),
                 content: escapeHTML(document.getElementById('entryContent').value),
@@ -525,6 +525,7 @@
             switchTab('private');
         }
 
+        // CANLI SİLME VE EKLENME DİNLEYİCİSİ (ONSNAPSHOT)
         function syncPrivateCloudEntries() {
             if (!db || !currentUser) {
                 renderPrivateFeed();
@@ -532,9 +533,10 @@
                 return;
             }
 
+            if (privateUnsubscribe) privateUnsubscribe(); // Eski dinleyiciyi temizle
+
             try {
-                // STRING ID İLE SORGULA
-                db.collection("private_entries")
+                privateUnsubscribe = db.collection("private_entries")
                   .where("userId", "==", String(currentUser.id))
                   .onSnapshot((snapshot) => {
                       const cloudEntries = [];
@@ -542,14 +544,13 @@
                           cloudEntries.push(doc.data());
                       });
 
-                      if (cloudEntries.length > 0) {
-                          localEntries = cloudEntries.sort((a,b) => b.timestamp - a.timestamp);
-                          localStorage.setItem('app_entries', JSON.stringify(localEntries));
-                      }
+                      // Buluttaki verileri doğrudan yerel hafızaya tam senkronize et
+                      localEntries = cloudEntries.sort((a,b) => b.timestamp - a.timestamp);
+                      localStorage.setItem('app_entries', JSON.stringify(localEntries));
+
                       renderPrivateFeed();
                       renderCalendarAndAnalytics();
                   }, (err) => {
-                      console.log("Bulut Hatası:", err);
                       renderPrivateFeed();
                       renderCalendarAndAnalytics();
                   });
@@ -721,11 +722,16 @@
             }
         }
 
+        // TAM SENKRONİZELİ SİLME FONKSİYONU
         function deleteEntry(id) {
             localEntries = localEntries.filter(e => e.id !== id);
             localStorage.setItem('app_entries', JSON.stringify(localEntries));
+            
             if (db) {
-                try { db.collection("private_entries").doc(id).delete().catch(err => console.log(err)); } catch(e){}
+                try { 
+                    // Veritabanından silinince diğer cihazın onSnapshot dinleyicisi anında tetiklenir
+                    db.collection("private_entries").doc(id).delete().catch(err => console.log(err)); 
+                } catch(e){}
             }
             renderPrivateFeed();
             renderCalendarAndAnalytics();
@@ -753,23 +759,3 @@
                 document.getElementById('writeSection').classList.add('active');
             } else if (tabName === 'private') {
                 document.querySelectorAll('.nav-btn')[1].classList.add('active');
-                document.getElementById('privateSection').classList.add('active');
-                syncPrivateCloudEntries();
-            } else if (tabName === 'public') {
-                document.querySelectorAll('.nav-btn')[2].classList.add('active');
-                document.getElementById('publicSection').classList.add('active');
-            }
-        }
-
-        function escapeHTML(str) {
-            if (!str) return '';
-            return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
-        }
-
-        function escapeQuotes(str) {
-            if (!str) return '';
-            return str.replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/\n/g, '\\n');
-        }
-    </script>
-</body>
-</html>
