@@ -244,7 +244,6 @@
                         <input type="text" id="regFullName" placeholder="Ad Soyad" required>
                         <input type="text" id="regUsername" placeholder="Kullanıcı Adı (Benzersiz)" required>
                         <input type="password" id="regPassword" placeholder="Güvenli Şifre" required>
-                        <input type="password" id="regPin" placeholder="4 Haneli Özel PIN Kodu" maxlength="4" required>
                         <button type="submit" id="regSubmitBtn" class="btn-submit" style="background: linear-gradient(135deg, var(--success), var(--accent-purple));">Hesap Oluştur</button>
                     </form>
                 </div>
@@ -338,7 +337,6 @@
             listenPublicCloudEntries();
         };
 
-        // GÜVENLİK KORUMASI: SHA-256 ŞİFRELEME FONKSİYONU
         function hashPassword(plainText) {
             return CryptoJS.SHA256(plainText).toString();
         }
@@ -382,7 +380,6 @@
             }
         }
 
-        // KORUMALI VE ŞİFRELİ KAYIT
         async function handleRegisterSubmit(e) {
             e.preventDefault();
             const regBtn = document.getElementById('regSubmitBtn');
@@ -391,11 +388,8 @@
             const fullName = escapeHTML(document.getElementById('regFullName').value.trim());
             const username = escapeHTML(document.getElementById('regUsername').value.trim().toLowerCase());
             const plainPassword = document.getElementById('regPassword').value;
-            const pin = document.getElementById('regPin').value;
 
-            // ŞİFREYİ SHA-256 İLE HASH'LE
             const hashedPassword = hashPassword(plainPassword);
-            const hashedPin = hashPassword(pin);
 
             if (!db) {
                 showNotice('Hata', 'Bulut sunucusuna bağlanılamadı.', '❌');
@@ -409,8 +403,7 @@
                     regBtn.innerText = "Hesap Oluştur"; regBtn.disabled = false; return;
                 }
 
-                // VERİTABANINA ASLA DÜZ ŞİFRE KAYDETME!
-                const newUser = { id: Date.now(), fullName, username, password: hashedPassword, pin: hashedPin };
+                const newUser = { id: Date.now(), fullName, username, password: hashedPassword };
                 await db.collection("users").doc(username).set(newUser);
 
                 users.push(newUser);
@@ -418,7 +411,7 @@
                 currentUser = newUser;
                 localStorage.setItem('app_current_user', JSON.stringify(currentUser));
 
-                showNotice('Tebrikler!', 'Hesabınız şifrelenerek güvenli bir şekilde oluşturuldu.', '🎉');
+                showNotice('Tebrikler!', 'Hesabınız güvenli bir şekilde oluşturuldu.', '🎉');
                 initApp();
             } catch (err) {
                 showNotice('Kayıt Hatası', 'Veritabanı bağlantısı kurulamadı.', '⚠️');
@@ -427,7 +420,6 @@
             }
         }
 
-        // KORUMALI VE ŞİFRELİ GİRİŞ
         async function handleLoginSubmit(e) {
             e.preventDefault();
             const loginBtn = document.getElementById('loginSubmitBtn');
@@ -435,7 +427,7 @@
 
             const username = escapeHTML(document.getElementById('loginUsername').value.trim().toLowerCase());
             const plainPassword = document.getElementById('loginPassword').value;
-            const hashedPassword = hashPassword(plainPassword); // GİRİLEN ŞİFREYİ HASH'LE
+            const hashedPassword = hashPassword(plainPassword);
 
             try {
                 let user = null;
@@ -443,7 +435,6 @@
                     const userDoc = await db.collection("users").doc(username).get();
                     if (userDoc.exists) {
                         const cloudUser = userDoc.data();
-                        // Şifre hash'lenmiş veriyle mi yoksa eski düz metinle mi eşleşiyor? (Geriye dönük uyumluluk)
                         if (cloudUser.password === hashedPassword || cloudUser.password === plainPassword) {
                             user = cloudUser;
                         }
@@ -526,8 +517,6 @@
             document.getElementById('entryContent').value = '';
             document.getElementById('isPublic').checked = false;
 
-            renderPrivateFeed();
-            renderCalendarAndAnalytics();
             showNotice('Başarılı', 'Sayfanız güvenli bir şekilde kaydedildi!', '📝');
             switchTab('private');
         }
@@ -566,6 +555,7 @@
 
         function renderPrivateFeed() {
             const privateFeed = document.getElementById('privateFeed');
+            if (!privateFeed) return;
             privateFeed.innerHTML = '';
 
             localEntries.forEach(entry => {
@@ -594,6 +584,9 @@
         }
 
         function renderCalendarAndAnalytics() {
+            const calendarGrid = document.getElementById('calendarGrid');
+            if (!calendarGrid) return;
+
             const now = new Date();
             const year = now.getFullYear();
             const month = now.getMonth();
@@ -602,7 +595,6 @@
             document.getElementById('calMonthTitle').innerText = `${monthNames[month]} ${year}`;
 
             const daysInMonth = new Date(year, month + 1, 0).getDate();
-            const calendarGrid = document.getElementById('calendarGrid');
             calendarGrid.innerHTML = `
                 <div class="cal-day-name">Pzt</div><div class="cal-day-name">Sal</div><div class="cal-day-name">Çar</div>
                 <div class="cal-day-name">Per</div><div class="cal-day-name">Cum</div><div class="cal-day-name">Cmt</div><div class="cal-day-name">Paz</div>
@@ -756,6 +748,7 @@
             } else if (tabName === 'private') {
                 document.querySelectorAll('.nav-btn')[1].classList.add('active');
                 document.getElementById('privateSection').classList.add('active');
+                syncPrivateCloudEntries();
             } else if (tabName === 'public') {
                 document.querySelectorAll('.nav-btn')[2].classList.add('active');
                 document.getElementById('publicSection').classList.add('active');
