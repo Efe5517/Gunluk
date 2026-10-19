@@ -7,6 +7,7 @@
     
     <!-- FIREBASE SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     
     <!-- GÜVENLİK ŞİFRELEME KÜTÜPHANESİ (CRYPTO-JS SHA-256) -->
@@ -321,23 +322,30 @@
         };
 
         let db = null;
+        let auth = null;
         try {
             if (typeof firebase !== 'undefined' && !firebase.apps.length) {
                 firebase.initializeApp(firebaseConfig);
                 db = firebase.firestore();
+                auth = firebase.auth();
             }
         } catch (e) { console.warn("Firebase hatası:", e); }
 
-        let users = JSON.parse(localStorage.getItem('app_users')) || [];
         let currentUser = JSON.parse(localStorage.getItem('app_current_user')) || null;
         let localEntries = JSON.parse(localStorage.getItem('app_entries')) || [];
         let privateUnsubscribe = null;
 
         window.onload = function() {
-            if (currentUser) {
-                initApp();
+            if (auth) {
+                auth.onAuthStateChanged((user) => {
+                    if (user && currentUser) {
+                        initApp();
+                    } else {
+                        showAuth();
+                    }
+                });
             } else {
-                showAuth();
+                if (currentUser) { initApp(); } else { showAuth(); }
             }
             listenPublicCloudEntries();
         };
@@ -407,88 +415,73 @@
             const plainPassword = document.getElementById('regPassword').value;
 
             const hashedPassword = hashPassword(plainPassword);
+            const fakeEmail = `${username}@gunlukapp.internal`;
 
-            if (!db) {
+            if (!db || !auth) {
                 showNotice('Hata', 'Bulut sunucusuna bağlanılamadı.', '❌');
-                regBtn.innerText = "Hesap Oluştur"; 
-                regBtn.disabled = false; 
-                return;
+                regBtn.innerText = "Hesap Oluştur"; regBtn.disabled = false; return;
             }
 
             try {
                 const userDoc = await db.collection("users").doc(username).get();
                 if (userDoc.exists) {
                     showNotice('Kullanıcı Adı Zaten Alınmış!', `'${username}' kullanıcı adı alınmış. Farklı bir ad deneyin.`, '❌');
-                    regBtn.innerText = "Hesap Oluştur"; 
-                    regBtn.disabled = false; 
-                    return;
+                    regBtn.innerText = "Hesap Oluştur"; regBtn.disabled = false; return;
                 }
 
-                const newUser = { id: String(Date.now()), fullName, username, password: hashedPassword };
+                // FIREBASE AUTHENTICATION KAYDI (ZIRHLI GÜVENLİK)
+                const authUser = await auth.createUserWithEmailAndPassword(fakeEmail, plainPassword);
+                const uid = authUser.user.uid;
+
+                const newUser = { id: uid, fullName, username, password: hashedPassword };
                 await db.collection("users").doc(username).set(newUser);
 
-                users.push(newUser);
-                localStorage.setItem('app_users', JSON.stringify(users));
                 currentUser = newUser;
                 localStorage.setItem('app_current_user', JSON.stringify(currentUser));
 
-                showNotice('Tebrikler!', 'Hesabınız güvenli bir şekilde oluşturuldu.', '🎉');
+                showNotice('Tebrikler!', 'Güvenli hesabınız oluşturuldu.', '🎉');
                 initApp();
             } catch (err) {
-                showNotice('Kayıt Hatası', 'Veritabanı bağlantısı kurulamadı.', '⚠️');
+                showNotice('Kayıt Hatası', err.message || 'Veritabanı bağlantısı kurulamadı.', '⚠️');
             } finally {
-                regBtn.innerText = "Hesap Oluştur"; 
-                regBtn.disabled = false;
+                regBtn.innerText = "Hesap Oluştur"; regBtn.disabled = false;
             }
         }
 
         async function handleLoginSubmit(e) {
             e.preventDefault();
             const loginBtn = document.getElementById('loginSubmitBtn');
-            loginBtn.innerText = "Oturum Açılıyor..."; 
-            loginBtn.disabled = true;
+            loginBtn.innerText = "Oturum Açılıyor..."; loginBtn.disabled = true;
 
             const username = escapeHTML(document.getElementById('loginUsername').value.trim().toLowerCase());
             const plainPassword = document.getElementById('loginPassword').value;
             const hashedPassword = hashPassword(plainPassword);
+            const fakeEmail = `${username}@gunlukapp.internal`;
 
             try {
-                let user = null;
-                if (db) {
+                if (auth && db) {
+                    // FIREBASE AUTH GİRİŞİ
+                    const authRes = await auth.signInWithEmailAndPassword(fakeEmail, plainPassword);
                     const userDoc = await db.collection("users").doc(username).get();
                     if (userDoc.exists) {
-                        const cloudUser = userDoc.data();
-                        if (cloudUser.password === hashedPassword || cloudUser.password === plainPassword) {
-                            user = cloudUser;
-                            user.id = String(user.id);
-                        }
+                        currentUser = userDoc.data();
+                        currentUser.id = authRes.user.uid;
+                        localStorage.setItem('app_current_user', JSON.stringify(currentUser));
+                        showNotice('Hoş Geldiniz', `Tekrar hoş geldiniz, ${currentUser.fullName}!`, '👋');
+                        initApp();
                     }
                 }
-                if (!user) {
-                    user = users.find(u => u.username.toLowerCase() === username && (u.password === hashedPassword || u.password === plainPassword));
-                    if (user) user.id = String(user.id);
-                }
-
-                if (user) {
-                    currentUser = user;
-                    localStorage.setItem('app_current_user', JSON.stringify(currentUser));
-                    showNotice('Hoş Geldiniz', `Tekrar hoş geldiniz, ${currentUser.fullName}!`, '👋');
-                    initApp();
-                } else {
-                    showNotice('Giriş Başarısız', 'Kullanıcı adı veya şifreniz hatalı!', '⚠️');
-                }
             } catch (err) {
-                showNotice('Bağlantı Hatası', 'Veritabanı sorgusu başarısız.', '⚠️');
+                showNotice('Giriş Başarısız', 'Kullanıcı adı veya şifreniz hatalı!', '⚠️');
             } finally {
-                loginBtn.innerText = "Oturum Aç"; 
-                loginBtn.disabled = false;
+                loginBtn.innerText = "Oturum Aç"; loginBtn.disabled = false;
             }
         }
 
         function initApp() {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
             document.getElementById('mainNav').style.display = 'flex';
-            document.getElementById('navUsername').innerText = currentUser.fullName;
+            if (currentUser) document.getElementById('navUsername').innerText = currentUser.fullName;
             switchTab('write');
             syncPrivateCloudEntries();
         }
@@ -498,6 +491,7 @@
                 privateUnsubscribe();
                 privateUnsubscribe = null;
             }
+            if (auth) auth.signOut();
             currentUser = null;
             localStorage.removeItem('app_current_user');
             document.getElementById('mainNav').style.display = 'none';
@@ -552,7 +546,6 @@
             switchTab('private');
         }
 
-        // CANLI DİNLEME VE OTOMATİK EŞLEŞTİRME
         function syncPrivateCloudEntries() {
             if (!db || !currentUser) {
                 renderPrivateFeed();
@@ -580,7 +573,6 @@
                       renderPrivateFeed();
                       renderCalendarAndAnalytics();
                   }, (err) => {
-                      console.error("Özel alan senkronizasyon hatası:", err);
                       renderPrivateFeed();
                       renderCalendarAndAnalytics();
                   });
