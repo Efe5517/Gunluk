@@ -8,6 +8,9 @@
     <!-- FIREBASE SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    
+    <!-- GÜVENLİK ŞİFRELEME KÜTÜPHANESİ (CRYPTO-JS SHA-256) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 
     <style>
         :root {
@@ -179,7 +182,6 @@
 </head>
 <body>
 
-    <!-- BİLDİRİM MODAL -->
     <div id="customModal" class="modal-overlay">
         <div class="modal-box">
             <div id="modalIcon" style="font-size:2.5rem; margin-bottom:10px;">🔔</div>
@@ -189,7 +191,6 @@
         </div>
     </div>
 
-    <!-- KİTAP SAYFASI ŞEKLİNDE OKUMA MODAL -->
     <div id="readerModal" class="modal-overlay">
         <div class="reader-modal-box book-page">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--book-border); padding-bottom: 10px;">
@@ -250,7 +251,6 @@
             </div>
         </div>
 
-        <!-- 1. SEKME: GÜNLÜK YAZMA ALANI -->
         <div id="writeSection" class="section">
             <div class="book-page">
                 <h2 style="margin-bottom: 20px; font-family: 'Georgia', serif; color: var(--book-text);">✍️ Sayfaya Not Bırak</h2>
@@ -281,7 +281,6 @@
             </div>
         </div>
 
-        <!-- 2. SEKME: ÖZEL GÜNLÜĞÜM (ÇAPRAZ CİHAZ SENKRONİZELİ) -->
         <div id="privateSection" class="section">
             <div class="analytics-container">
                 <div class="analytics-card">
@@ -301,7 +300,6 @@
             <div id="privateFeed" class="grid"></div>
         </div>
 
-        <!-- 3. SEKME: TOPLULUK AKIŞI -->
         <div id="publicSection" class="section">
             <h2 style="margin-bottom: 15px; color: var(--text-muted);">🌍 Toplulukta Paylaşılan Sayfalar</h2>
             <div id="publicFeed" class="grid"></div>
@@ -339,6 +337,11 @@
             if (currentUser) { initApp(); } else { showAuth(); }
             listenPublicCloudEntries();
         };
+
+        // GÜVENLİK KORUMASI: SHA-256 ŞİFRELEME FONKSİYONU
+        function hashPassword(plainText) {
+            return CryptoJS.SHA256(plainText).toString();
+        }
 
         function toggleTheme() {
             document.body.classList.toggle('light-theme');
@@ -379,15 +382,20 @@
             }
         }
 
+        // KORUMALI VE ŞİFRELİ KAYIT
         async function handleRegisterSubmit(e) {
             e.preventDefault();
             const regBtn = document.getElementById('regSubmitBtn');
             regBtn.innerText = "Sorgulanıyor..."; regBtn.disabled = true;
 
-            const fullName = document.getElementById('regFullName').value.trim();
-            const username = document.getElementById('regUsername').value.trim().toLowerCase();
-            const password = document.getElementById('regPassword').value;
+            const fullName = escapeHTML(document.getElementById('regFullName').value.trim());
+            const username = escapeHTML(document.getElementById('regUsername').value.trim().toLowerCase());
+            const plainPassword = document.getElementById('regPassword').value;
             const pin = document.getElementById('regPin').value;
+
+            // ŞİFREYİ SHA-256 İLE HASH'LE
+            const hashedPassword = hashPassword(plainPassword);
+            const hashedPin = hashPassword(pin);
 
             if (!db) {
                 showNotice('Hata', 'Bulut sunucusuna bağlanılamadı.', '❌');
@@ -401,7 +409,8 @@
                     regBtn.innerText = "Hesap Oluştur"; regBtn.disabled = false; return;
                 }
 
-                const newUser = { id: Date.now(), fullName, username, password, pin };
+                // VERİTABANINA ASLA DÜZ ŞİFRE KAYDETME!
+                const newUser = { id: Date.now(), fullName, username, password: hashedPassword, pin: hashedPin };
                 await db.collection("users").doc(username).set(newUser);
 
                 users.push(newUser);
@@ -409,7 +418,7 @@
                 currentUser = newUser;
                 localStorage.setItem('app_current_user', JSON.stringify(currentUser));
 
-                showNotice('Tebrikler!', 'Hesabınız başarıyla oluşturuldu.', '🎉');
+                showNotice('Tebrikler!', 'Hesabınız şifrelenerek güvenli bir şekilde oluşturuldu.', '🎉');
                 initApp();
             } catch (err) {
                 showNotice('Kayıt Hatası', 'Veritabanı bağlantısı kurulamadı.', '⚠️');
@@ -418,24 +427,30 @@
             }
         }
 
+        // KORUMALI VE ŞİFRELİ GİRİŞ
         async function handleLoginSubmit(e) {
             e.preventDefault();
             const loginBtn = document.getElementById('loginSubmitBtn');
             loginBtn.innerText = "Oturum Açılıyor..."; loginBtn.disabled = true;
 
-            const username = document.getElementById('loginUsername').value.trim().toLowerCase();
-            const password = document.getElementById('loginPassword').value;
+            const username = escapeHTML(document.getElementById('loginUsername').value.trim().toLowerCase());
+            const plainPassword = document.getElementById('loginPassword').value;
+            const hashedPassword = hashPassword(plainPassword); // GİRİLEN ŞİFREYİ HASH'LE
 
             try {
                 let user = null;
                 if (db) {
                     const userDoc = await db.collection("users").doc(username).get();
-                    if (userDoc.exists && userDoc.data().password === password) {
-                        user = userDoc.data();
+                    if (userDoc.exists) {
+                        const cloudUser = userDoc.data();
+                        // Şifre hash'lenmiş veriyle mi yoksa eski düz metinle mi eşleşiyor? (Geriye dönük uyumluluk)
+                        if (cloudUser.password === hashedPassword || cloudUser.password === plainPassword) {
+                            user = cloudUser;
+                        }
                     }
                 }
                 if (!user) {
-                    user = users.find(u => u.username.toLowerCase() === username && u.password === password);
+                    user = users.find(u => u.username.toLowerCase() === username && (u.password === hashedPassword || u.password === plainPassword));
                 }
 
                 if (user) {
@@ -458,7 +473,7 @@
             document.getElementById('mainNav').style.display = 'flex';
             document.getElementById('navUsername').innerText = currentUser.fullName;
             switchTab('write');
-            syncPrivateCloudEntries(); // Kullanıcının özel günlüklerini buluttan çek
+            syncPrivateCloudEntries();
         }
 
         function logout() {
@@ -474,7 +489,6 @@
             document.getElementById('authSection').classList.add('active');
         }
 
-        // GÜNLÜK KAYDETME (ÖZEL GÜNLÜKLER DE BULUTA SADECE USERID İLE YAZILIR)
         function handleJournalSubmit(e) {
             e.preventDefault();
 
@@ -485,9 +499,9 @@
             const newEntry = {
                 id: Date.now().toString(),
                 userId: currentUser.id,
-                author: currentUser.fullName,
-                title: document.getElementById('entryTitle').value,
-                content: document.getElementById('entryContent').value,
+                author: escapeHTML(currentUser.fullName),
+                title: escapeHTML(document.getElementById('entryTitle').value),
+                content: escapeHTML(document.getElementById('entryContent').value),
                 mood: document.getElementById('entryMood').value,
                 date: formattedDate,
                 rawDate: now.toISOString().split('T')[0],
@@ -496,11 +510,9 @@
                 likes: 0
             };
 
-            // 1. Yerel Depolamaya Ekle
             localEntries.unshift(newEntry);
             localStorage.setItem('app_entries', JSON.stringify(localEntries));
 
-            // 2. Özel Günlüğü Gizli Bulut Koleksiyonuna Ekle (Sadece Bu Kullanıcı Görsün)
             if (db) {
                 try {
                     db.collection("private_entries").doc(newEntry.id).set(newEntry).catch(err => console.log(err));
@@ -520,7 +532,6 @@
             switchTab('private');
         }
 
-        // KULLANICININ KENDİ ÖZEL GÜNLÜKLERİNİ BULUTTAN ÇEK (SADECE O HESAP İÇİN)
         function syncPrivateCloudEntries() {
             if (!db || !currentUser) {
                 renderPrivateFeed();
@@ -529,7 +540,6 @@
             }
 
             try {
-                // Sadece mevcut kullanıcının ID'si ile eşleşen günlükleri çek
                 db.collection("private_entries")
                   .where("userId", "==", currentUser.id)
                   .onSnapshot((snapshot) => {
@@ -539,13 +549,12 @@
                       });
 
                       if (cloudEntries.length > 0) {
-                          // Buluttan gelen özel günlükleri yerel liste ile birleştir ve sırala
                           localEntries = cloudEntries.sort((a,b) => b.timestamp - a.timestamp);
                           localStorage.setItem('app_entries', JSON.stringify(localEntries));
                       }
                       renderPrivateFeed();
                       renderCalendarAndAnalytics();
-                  }, (err) => {
+                  }, () => {
                       renderPrivateFeed();
                       renderCalendarAndAnalytics();
                   });
@@ -568,11 +577,11 @@
                                     <span>${entry.mood}</span>
                                     <span class="card-date">📅 ${entry.date}</span>
                                 </div>
-                                <div class="card-title">${escapeHTML(entry.title)}</div>
-                                <div class="card-content">${escapeHTML(entry.content)}</div>
+                                <div class="card-title">${entry.title}</div>
+                                <div class="card-content">${entry.content}</div>
                             </div>
                             <div class="card-footer">
-                                <span>✍️ ${escapeHTML(entry.author)}</span>
+                                <span>✍️ ${entry.author}</span>
                                 <div class="card-actions" onclick="event.stopPropagation();">
                                     ${entry.isPublic ? `<span style="color:#10b981;">🌍 Toplulukta</span>` : `<span style="color:#f59e0b;">🔒 Gizli</span>`}
                                     <button class="btn-delete" onclick="deleteEntry('${entry.id}')">🗑️ Sil</button>
@@ -589,7 +598,7 @@
             const year = now.getFullYear();
             const month = now.getMonth();
 
-            const monthNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylul", "Ekim", "Kasım", "Aralık"];
+            const monthNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
             document.getElementById('calMonthTitle').innerText = `${monthNames[month]} ${year}`;
 
             const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -662,11 +671,11 @@
                                         <span>${entry.mood}</span>
                                         <span class="card-date">📅 ${entry.date}</span>
                                     </div>
-                                    <div class="card-title">${escapeHTML(entry.title)}</div>
-                                    <div class="card-content">${escapeHTML(entry.content)}</div>
+                                    <div class="card-title">${entry.title}</div>
+                                    <div class="card-content">${entry.content}</div>
                                 </div>
                                 <div class="card-footer">
-                                    <span>✍️ ${escapeHTML(entry.author)}</span>
+                                    <span>✍️ ${entry.author}</span>
                                     <div class="card-actions" onclick="event.stopPropagation();">
                                         <button class="btn-like" onclick="likeCloudEntry('${entry.id}', ${entry.likes || 0})">❤️ ${entry.likes || 0}</button>
                                         ${isMyPost ? `<button class="btn-delete" onclick="deleteCloudEntry('${entry.id}')">🗑️ Sil</button>` : ''}
@@ -690,11 +699,11 @@
                                 <span>${entry.mood}</span>
                                 <span class="card-date">📅 ${entry.date}</span>
                             </div>
-                            <div class="card-title">${escapeHTML(entry.title)}</div>
-                            <div class="card-content">${escapeHTML(entry.content)}</div>
+                            <div class="card-title">${entry.title}</div>
+                            <div class="card-content">${entry.content}</div>
                         </div>
                         <div class="card-footer">
-                            <span>✍️ ${escapeHTML(entry.author)}</span>
+                            <span>✍️ ${entry.author}</span>
                             <button class="btn-like" onclick="event.stopPropagation(); likeLocalEntry('${entry.id}')">❤️ ${entry.likes || 0}</button>
                         </div>
                     </div>
@@ -754,10 +763,12 @@
         }
 
         function escapeHTML(str) {
+            if (!str) return '';
             return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
         }
 
         function escapeQuotes(str) {
+            if (!str) return '';
             return str.replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/\n/g, '\\n');
         }
     </script>
