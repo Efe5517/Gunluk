@@ -196,7 +196,7 @@
         <div class="reader-modal-box book-page">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--book-border); padding-bottom: 10px;">
                 <span id="readMood" style="font-size: 1.2rem;">😊 Mutlu</span>
-                <span id="readDate" style="font-size: 0.85rem; font-weight: bold; color: #8b5cf6;">19 Ekim 2026</span>
+                <span id="readDate" style="font-size: 0.85rem; font-weight: bold; color: #8b5cf6;">Tarih</span>
             </div>
             <h2 id="readTitle" style="font-family: 'Georgia', serif; font-size: 1.6rem; margin-bottom: 15px;">Günlük Başlığı</h2>
             <div id="readContent" style="font-family: 'Georgia', serif; font-size: 1.05rem; line-height: 1.8; white-space: pre-wrap; margin-bottom: 25px;">Günlük içeriği...</div>
@@ -429,7 +429,6 @@
                     regBtn.innerText = "Hesap Oluştur"; regBtn.disabled = false; return;
                 }
 
-                // FIREBASE AUTHENTICATION KAYDI (ZIRHLI GÜVENLİK)
                 const authUser = await auth.createUserWithEmailAndPassword(fakeEmail, plainPassword);
                 const uid = authUser.user.uid;
 
@@ -460,7 +459,6 @@
 
             try {
                 if (auth && db) {
-                    // FIREBASE AUTH GİRİŞİ
                     const authRes = await auth.signInWithEmailAndPassword(fakeEmail, plainPassword);
                     const userDoc = await db.collection("users").doc(username).get();
                     if (userDoc.exists) {
@@ -512,6 +510,12 @@
             const formattedDate = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }) + 
                                   " • " + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
 
+            // YEREL SAAT DİLİMİNE GÖRE RAW DATE OLUŞTURMA (SAAT DİLİMİ SAPMASINI ÖNLER)
+            const yyyy = now.getFullYear();
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            const dd = String(now.getDate()).padStart(2, '0');
+            const localRawDate = `${yyyy}-${mm}-${dd}`;
+
             const newEntry = {
                 id: String(Date.now()),
                 userId: String(currentUser.id),
@@ -520,7 +524,7 @@
                 content: escapeHTML(document.getElementById('entryContent').value),
                 mood: document.getElementById('entryMood').value,
                 date: formattedDate,
-                rawDate: now.toISOString().split('T')[0],
+                rawDate: localRawDate,
                 timestamp: Date.now(),
                 isPublic: document.getElementById('isPublic').checked,
                 likes: 0
@@ -612,6 +616,7 @@
             });
         }
 
+        // TAM İSABETLİ DÜZELTİLMİŞ TAKVİM VE ANALİTİK ÇİZİMİ
         function renderCalendarAndAnalytics() {
             const calendarGrid = document.getElementById('calendarGrid');
             if (!calendarGrid) return;
@@ -620,7 +625,7 @@
             const year = now.getFullYear();
             const month = now.getMonth();
 
-            const monthNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+            const monthNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylul", "Ekim", "Kasım", "Aralık"];
             document.getElementById('calMonthTitle').innerText = `${monthNames[month]} ${year}`;
 
             const daysInMonth = new Date(year, month + 1, 0).getDate();
