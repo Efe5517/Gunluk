@@ -15,7 +15,7 @@
 
     <style>
         :root {
-            /* VARSAYILAN KREM / ESKİTME TEMA (NET VE KESKİN RENKLER) */
+            /* VARSAYILAN KREM / ESKİTME TEMA */
             --bg-dark: #f8f4e8;
             --bg-card: #fffdf7;
             --bg-input: #ffffff;
@@ -104,7 +104,6 @@
         }
         input:focus, textarea:focus, select:focus { border-color: var(--accent-red); }
 
-        /* KİTAP SAYFASI MODU */
         .book-page {
             background-color: var(--book-paper);
             color: var(--book-text);
@@ -199,7 +198,7 @@
             <div id="modalIcon" style="font-size:2.5rem; margin-bottom:10px;">🔔</div>
             <div id="modalTitle" style="font-size:1.2rem; font-weight:bold; margin-bottom:8px;">Bildirim</div>
             <div id="modalText" style="color:var(--text-muted); font-size:0.9rem; margin-bottom:20px;">İşlem tamamlandı.</div>
-            <button class="btn-submit" onclick="closeModal()">Tamam</button>
+            <button class="btn-submit" type="button" onclick="closeModal()">Tamam</button>
         </div>
     </div>
 
@@ -213,7 +212,7 @@
             <div id="readContent" style="font-size: 1.05rem; line-height: 1.8; white-space: pre-wrap; margin-bottom: 25px;">Günlük içeriği...</div>
             <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--book-border); padding-top: 15px;">
                 <span id="readAuthor" style="font-size: 0.9rem; font-style: italic;">Yazar</span>
-                <button class="btn-submit" style="width: auto; padding: 8px 20px; background: #2b1810;" onclick="closeReaderModal()">Kapat</button>
+                <button class="btn-submit" type="button" style="width: auto; padding: 8px 20px; background: #2b1810;" onclick="closeReaderModal()">Kapat</button>
             </div>
         </div>
     </div>
@@ -222,13 +221,13 @@
         <div class="header-container">
             <div class="logo">📖 Günlüğüm & Topluluk</div>
             <nav id="mainNav" style="display: none;">
-                <button class="nav-btn active" onclick="switchTab('write')">✍️ Günlük Yaz</button>
-                <button class="nav-btn" onclick="switchTab('private')">🔒 Özel Günlüğüm</button>
-                <button class="nav-btn" onclick="switchTab('public')">🌍 Topluluk Keşfet</button>
-                <button class="btn-theme" onclick="toggleTheme()">🌗 Tema Değiştir</button>
+                <button class="nav-btn active" type="button" onclick="switchTab('write')">✍️ Günlük Yaz</button>
+                <button class="nav-btn" type="button" onclick="switchTab('private')">🔒 Özel Günlüğüm</button>
+                <button class="nav-btn" type="button" onclick="switchTab('public')">🌍 Topluluk Keşfet</button>
+                <button class="btn-theme" type="button" onclick="toggleTheme()">🌗 Tema Değiştir</button>
                 <div class="user-badge">
                     <span id="navUsername">Kullanıcı</span>
-                    <button class="btn-logout" onclick="logout()">Çıkış Yap</button>
+                    <button class="btn-logout" type="button" onclick="logout()">Çıkış Yap</button>
                 </div>
             </nav>
         </div>
@@ -245,21 +244,20 @@
 
                 <div id="loginFormContainer" style="display: block;">
                     <form onsubmit="handleLoginSubmit(event)">
-                        <input type="text" id="loginUsername" placeholder="Kullanıcı Adı" required>
-                        <input type="password" id="loginPassword" placeholder="Şifre" required>
+                        <input type="text" id="loginUsername" placeholder="Kullanıcı Adı" required autocomplete="username">
+                        <input type="password" id="loginPassword" placeholder="Şifre" required autocomplete="current-password">
                         <button type="submit" id="loginSubmitBtn" class="btn-submit">Oturum Aç</button>
                     </form>
                 </div>
 
                 <div id="registerFormContainer" style="display: none;">
-                    <!-- GÜVENLİK UYARISI -->
                     <div class="security-notice">
                         🛡️ <strong>Güvenlik Uyarısı:</strong> Lütfen şifrelerinizi, banka/kredi kartı bilgilerinizi veya hassas kişisel verilerinizi günlük sayfalarınıza yazmayınız. Bu platform kişisel anılarınızı tutmanız ve toplulukla paylaşmanız için tasarlanmıştır.
                     </div>
                     <form onsubmit="handleRegisterSubmit(event)">
                         <input type="text" id="regFullName" placeholder="Ad Soyad" required>
-                        <input type="text" id="regUsername" placeholder="Kullanıcı Adı (Benzersiz)" required>
-                        <input type="password" id="regPassword" placeholder="Güvenli Şifre" required>
+                        <input type="text" id="regUsername" placeholder="Kullanıcı Adı (Benzersiz)" required autocomplete="username">
+                        <input type="password" id="regPassword" placeholder="Güvenli Şifre" required autocomplete="new-password">
                         <button type="submit" id="regSubmitBtn" class="btn-submit">Hesap Oluştur</button>
                     </form>
                 </div>
@@ -270,7 +268,6 @@
             <div class="book-page">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
                     <h2 style="font-family: 'Georgia', serif; color: var(--book-text);">✍️ Sayfaya Not Bırak</h2>
-                    <!-- YAZI TİPİ SEÇİCİ -->
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <label style="font-size: 0.85rem; font-weight: bold; color: var(--book-text);">Yazı Tipi:</label>
                         <select id="entryFont" onchange="applyFontChange()" style="width: auto; margin-bottom: 0; padding: 6px 10px; font-size: 0.85rem;">
@@ -302,4 +299,279 @@
                         <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--book-text);">
                             <input type="checkbox" id="isPublic">
                             <span>🌍 Bu sayfayı Topluluk Akışında Paylaş</span>
-                        </
+                        </label>
+                    </div>
+
+                    <button type="submit" class="btn-submit" style="background: var(--book-text); color: var(--book-paper);">Sayfayı Kaydet</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="privateSection" class="section">
+            <div class="analytics-container">
+                <div class="analytics-card">
+                    <h3>📅 Çalışan Günlük Takvimi</h3>
+                    <p id="calMonthTitle" style="color: var(--text-muted); font-size: 0.85rem; margin-top: 4px;"></p>
+                    <div id="calendarGrid" class="calendar-grid"></div>
+                </div>
+
+                <div class="analytics-card">
+                    <h3>📊 Duygu Durum (Mood) Analizi</h3>
+                    <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 4px;">Günlüklerinizdeki hislerin dağılımı:</p>
+                    <div id="moodAnalyticsList" class="mood-bar-container"></div>
+                </div>
+            </div>
+
+            <h2 style="margin-bottom: 15px; color: var(--text-main);">Sadece Sizin Görebileceğiniz Kişisel Sayfalar</h2>
+            <div id="privateFeed" class="grid"></div>
+        </div>
+
+        <div id="publicSection" class="section">
+            <h2 style="margin-bottom: 15px; color: var(--text-main);">🌍 Toplulukta Paylaşılan Sayfalar</h2>
+            <div id="publicFeed" class="grid"></div>
+        </div>
+
+    </main>
+
+    <footer>
+        <p>Çevrimiçi Günlük & Topluluk Platformu &copy; 2026</p>
+    </footer>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyCLSBCDDzqYpF6iuddqF9RW1-t8ZuRMhN4",
+            authDomain: "gunluk-5caa3.firebaseapp.com",
+            projectId: "gunluk-5caa3",
+            storageBucket: "gunluk-5caa3.firebasestorage.app",
+            messagingSenderId: "1039478561181",
+            appId: "1:1039478561181:web:1a14d4c1d1faa1d4877774"
+        };
+
+        let db = null;
+        let auth = null;
+        try {
+            if (typeof firebase !== 'undefined' && !firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+                db = firebase.firestore();
+                auth = firebase.auth();
+            }
+        } catch (e) { console.warn("Firebase hatası:", e); }
+
+        let currentUser = JSON.parse(localStorage.getItem('app_current_user')) || null;
+        let localEntries = JSON.parse(localStorage.getItem('app_entries')) || [];
+        let privateUnsubscribe = null;
+
+        window.onload = function() {
+            if (auth) {
+                auth.onAuthStateChanged((user) => {
+                    if (user && currentUser) {
+                        initApp();
+                    } else {
+                        showAuth();
+                    }
+                });
+            } else {
+                if (currentUser) { initApp(); } else { showAuth(); }
+            }
+            listenPublicCloudEntries();
+        };
+
+        function hashPassword(plainText) {
+            if (typeof CryptoJS !== 'undefined') {
+                return CryptoJS.SHA256(plainText).toString();
+            }
+            return plainText;
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('dark-theme');
+        }
+
+        function applyFontChange() {
+            const font = document.getElementById('entryFont').value;
+            document.getElementById('entryTitle').style.fontFamily = font;
+            document.getElementById('entryContent').style.fontFamily = font;
+        }
+
+        function showNotice(title, text, icon = "🔔") {
+            document.getElementById('modalTitle').innerText = title;
+            document.getElementById('modalText').innerText = text;
+            document.getElementById('modalIcon').innerText = icon;
+            document.getElementById('customModal').style.display = 'flex';
+        }
+
+        function closeModal() { 
+            document.getElementById('customModal').style.display = 'none'; 
+        }
+
+        function openReaderModal(title, content, date, author, mood, font = "'Georgia', serif") {
+            const titleElem = document.getElementById('readTitle');
+            const contentElem = document.getElementById('readContent');
+            titleElem.innerText = title;
+            contentElem.innerText = content;
+            titleElem.style.fontFamily = font;
+            contentElem.style.fontFamily = font;
+            
+            document.getElementById('readDate').innerText = date;
+            document.getElementById('readAuthor').innerText = "Yazar: " + author;
+            document.getElementById('readMood').innerText = mood;
+            document.getElementById('readerModal').style.display = 'flex';
+        }
+
+        function closeReaderModal() { 
+            document.getElementById('readerModal').style.display = 'none'; 
+        }
+
+        function toggleAuth(mode) {
+            const loginBox = document.getElementById('loginFormContainer');
+            const regBox = document.getElementById('registerFormContainer');
+            const loginBtn = document.getElementById('tabLoginBtn');
+            const regBtn = document.getElementById('tabRegisterBtn');
+
+            if (mode === 'register') {
+                loginBox.style.display = 'none'; 
+                regBox.style.display = 'block';
+                loginBtn.classList.remove('active'); 
+                regBtn.classList.add('active');
+            } else {
+                regBox.style.display = 'none'; 
+                loginBox.style.display = 'block';
+                regBtn.classList.remove('active'); 
+                loginBtn.classList.add('active');
+            }
+        }
+
+        async function handleRegisterSubmit(e) {
+            e.preventDefault();
+            const regBtn = document.getElementById('regSubmitBtn');
+            regBtn.innerText = "Sorgulanıyor..."; 
+            regBtn.disabled = true;
+
+            const fullName = escapeHTML(document.getElementById('regFullName').value.trim());
+            const username = escapeHTML(document.getElementById('regUsername').value.trim().toLowerCase());
+            const plainPassword = document.getElementById('regPassword').value;
+
+            const hashedPassword = hashPassword(plainPassword);
+            const fakeEmail = `${username}@gunlukapp.internal`;
+
+            if (!db || !auth) {
+                showNotice('Hata', 'Bulut sunucusuna bağlanılamadı.', '❌');
+                regBtn.innerText = "Hesap Oluştur"; regBtn.disabled = false; return;
+            }
+
+            try {
+                const userDoc = await db.collection("users").doc(username).get();
+                if (userDoc.exists) {
+                    showNotice('Kullanıcı Adı Zaten Alınmış!', `'${username}' kullanıcı adı alınmış. Farklı bir ad deneyin.`, '❌');
+                    regBtn.innerText = "Hesap Oluştur"; regBtn.disabled = false; return;
+                }
+
+                const authUser = await auth.createUserWithEmailAndPassword(fakeEmail, plainPassword);
+                const uid = authUser.user.uid;
+
+                const newUser = { id: uid, fullName, username, password: hashedPassword };
+                await db.collection("users").doc(username).set(newUser);
+
+                currentUser = newUser;
+                localStorage.setItem('app_current_user', JSON.stringify(currentUser));
+
+                showNotice('Tebrikler!', 'Güvenli hesabınız oluşturuldu.', '🎉');
+                initApp();
+            } catch (err) {
+                showNotice('Kayıt Hatası', err.message || 'Veritabanı bağlantısı kurulamadı.', '⚠️');
+            } finally {
+                regBtn.innerText = "Hesap Oluştur"; regBtn.disabled = false;
+            }
+        }
+
+        async function handleLoginSubmit(e) {
+            e.preventDefault();
+            const loginBtn = document.getElementById('loginSubmitBtn');
+            loginBtn.innerText = "Oturum Açılıyor..."; loginBtn.disabled = true;
+
+            const username = escapeHTML(document.getElementById('loginUsername').value.trim().toLowerCase());
+            const plainPassword = document.getElementById('loginPassword').value;
+            const hashedPassword = hashPassword(plainPassword);
+            const fakeEmail = `${username}@gunlukapp.internal`;
+
+            try {
+                if (auth && db) {
+                    const authRes = await auth.signInWithEmailAndPassword(fakeEmail, plainPassword);
+                    const userDoc = await db.collection("users").doc(username).get();
+                    if (userDoc.exists) {
+                        currentUser = userDoc.data();
+                        currentUser.id = authRes.user.uid;
+                        localStorage.setItem('app_current_user', JSON.stringify(currentUser));
+                        showNotice('Hoş Geldiniz', `Tekrar hoş geldiniz, ${currentUser.fullName}!`, '👋');
+                        initApp();
+                    }
+                }
+            } catch (err) {
+                showNotice('Giriş Başarısız', 'Kullanıcı adı veya şifreniz hatalı!', '⚠️');
+            } finally {
+                loginBtn.innerText = "Oturum Aç"; loginBtn.disabled = false;
+            }
+        }
+
+        function initApp() {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById('mainNav').style.display = 'flex';
+            if (currentUser) document.getElementById('navUsername').innerText = currentUser.fullName;
+            switchTab('write');
+            syncPrivateCloudEntries();
+        }
+
+        function logout() {
+            if (typeof privateUnsubscribe === 'function') {
+                privateUnsubscribe();
+                privateUnsubscribe = null;
+            }
+            if (auth) auth.signOut();
+            currentUser = null;
+            localStorage.removeItem('app_current_user');
+            document.getElementById('mainNav').style.display = 'none';
+            showAuth();
+            showNotice('Çıkış Yapıldı', 'Güvenli bir şekilde çıkış yaptınız.', '🔒');
+        }
+
+        function showAuth() {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById('authSection').classList.add('active');
+            toggleAuth('login');
+        }
+
+        function handleJournalSubmit(e) {
+            e.preventDefault();
+
+            const now = new Date();
+            const formattedDate = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }) + 
+                                  " • " + now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+
+            const yyyy = now.getFullYear();
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            const dd = String(now.getDate()).padStart(2, '0');
+            const localRawDate = `${yyyy}-${mm}-${dd}`;
+            const selectedFont = document.getElementById('entryFont').value;
+
+            const newEntry = {
+                id: String(Date.now()),
+                userId: String(currentUser.id),
+                author: escapeHTML(currentUser.fullName),
+                title: escapeHTML(document.getElementById('entryTitle').value),
+                content: escapeHTML(document.getElementById('entryContent').value),
+                mood: document.getElementById('entryMood').value,
+                font: selectedFont,
+                date: formattedDate,
+                rawDate: localRawDate,
+                timestamp: Date.now(),
+                isPublic: document.getElementById('isPublic').checked,
+                likes: 0
+            };
+
+            localEntries.unshift(newEntry);
+            localStorage.setItem('app_entries', JSON.stringify(localEntries));
+
+            if (db) {
+                try {
+                    db.collection("private_entries").doc(newEntry.id).set(newEntry).catch(err => console.log(err));
+                    if (newEntry.isPublic) {
