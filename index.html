@@ -425,17 +425,23 @@
             document.getElementById('customModal').style.display = 'none'; 
         }
 
-        function openReaderModal(title, content, date, author, mood, font = "'Georgia', serif") {
+        // KARTLARA TIKLANDIĞINDA OKUMA PENCERESİNİ AÇAN GÜVENLİ FONKSİYON
+        function openReaderById(id) {
+            const entry = localEntries.find(e => String(e.id) === String(id));
+            if (!entry) return;
+
+            const font = entry.font || "'Georgia', serif";
             const titleElem = document.getElementById('readTitle');
             const contentElem = document.getElementById('readContent');
-            titleElem.innerText = title;
-            contentElem.innerText = content;
+            
+            titleElem.innerText = entry.title;
+            contentElem.innerText = entry.content;
             titleElem.style.fontFamily = font;
             contentElem.style.fontFamily = font;
             
-            document.getElementById('readDate').innerText = date;
-            document.getElementById('readAuthor').innerText = "Yazar: " + author;
-            document.getElementById('readMood').innerText = mood;
+            document.getElementById('readDate').innerText = entry.date;
+            document.getElementById('readAuthor').innerText = "Yazar: " + entry.author;
+            document.getElementById('readMood').innerText = entry.mood;
             document.getElementById('readerModal').style.display = 'flex';
         }
 
@@ -635,7 +641,7 @@
                 if (currentUser && String(entry.userId) === String(currentUser.id)) {
                     const entryFont = entry.font || "'Georgia', serif";
                     privateFeed.innerHTML += `
-                        <div class="card" onclick="openReaderModal('${escapeQuotes(entry.title)}', '${escapeQuotes(entry.content)}', '${entry.date}', '${escapeQuotes(entry.author)}', '${entry.mood}', '${entryFont}')">
+                        <div class="card" onclick="openReaderById('${entry.id}')">
                             <div>
                                 <div class="card-header">
                                     <span>${entry.mood}</span>
@@ -732,7 +738,7 @@
                         const entryFont = entry.font || "'Georgia', serif";
 
                         publicFeed.innerHTML += `
-                            <div class="card" onclick="openReaderModal('${escapeQuotes(entry.title)}', '${escapeQuotes(entry.content)}', '${entry.date}', '${escapeQuotes(entry.author)}', '${entry.mood}', '${entryFont}')">
+                            <div class="card" onclick="openReaderById('${entry.id}')">
                                 <div>
                                     <div class="card-header">
                                         <span>${entry.mood}</span>
@@ -761,7 +767,7 @@
             localEntries.filter(e => e.isPublic).forEach(entry => {
                 const entryFont = entry.font || "'Georgia', serif";
                 publicFeed.innerHTML += `
-                    <div class="card" onclick="openReaderModal('${escapeQuotes(entry.title)}', '${escapeQuotes(entry.content)}', '${entry.date}', '${escapeQuotes(entry.author)}', '${entry.mood}', '${entryFont}')">
+                    <div class="card" onclick="openReaderById('${entry.id}')">
                         <div>
                             <div class="card-header">
                                 <span>${entry.mood}</span>
@@ -797,52 +803,4 @@
             
             if (db) {
                 try { 
-                    db.collection("private_entries").doc(id).delete().catch(err => console.log(err)); 
-                } catch(e){}
-            }
-            renderPrivateFeed();
-            renderCalendarAndAnalytics();
-        }
-
-        function likeCloudEntry(id, currentLikes) {
-            if (db) { try { db.collection("public_entries").doc(id).update({ likes: currentLikes + 1 }); } catch(e){} }
-        }
-
-        function likeLocalEntry(id) {
-            const entry = localEntries.find(e => e.id === id);
-            if (entry) {
-                entry.likes = (entry.likes || 0) + 1;
-                localStorage.setItem('app_entries', JSON.stringify(localEntries));
-                renderPublicFallback();
-            }
-        }
-
-        function switchTab(tabName) {
-            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-            document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
-
-            if (tabName === 'write') {
-                document.querySelectorAll('.nav-btn')[0].classList.add('active');
-                document.getElementById('writeSection').classList.add('active');
-            } else if (tabName === 'private') {
-                document.querySelectorAll('.nav-btn')[1].classList.add('active');
-                document.getElementById('privateSection').classList.add('active');
-                syncPrivateCloudEntries();
-            } else if (tabName === 'public') {
-                document.querySelectorAll('.nav-btn')[2].classList.add('active');
-                document.getElementById('publicSection').classList.add('active');
-            }
-        }
-
-        function escapeHTML(str) {
-            if (!str) return '';
-            return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
-        }
-
-        function escapeQuotes(str) {
-            if (!str) return '';
-            return str.replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/\n/g, '\\n');
-        }
-    </script>
-</body>
-</html>
+                    db.collection("private_entries").doc(id).delete().catch(err
