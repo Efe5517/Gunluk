@@ -376,6 +376,27 @@
             listenPublicCloudEntries();
         };
 
+        function toggleAuth(mode) {
+            const loginBox = document.getElementById('loginFormContainer');
+            const regBox = document.getElementById('registerFormContainer');
+            const loginBtn = document.getElementById('tabLoginBtn');
+            const regBtn = document.getElementById('tabRegisterBtn');
+
+            if (!loginBox || !regBox) return;
+
+            if (mode === 'register') {
+                loginBox.style.display = 'none'; 
+                regBox.style.display = 'block';
+                if (loginBtn) loginBtn.classList.remove('active'); 
+                if (regBtn) regBtn.classList.add('active');
+            } else {
+                regBox.style.display = 'none'; 
+                loginBox.style.display = 'block';
+                if (regBtn) regBtn.classList.remove('active'); 
+                if (loginBtn) loginBtn.classList.add('active');
+            }
+        }
+
         function hashPassword(plainText) {
             if (typeof CryptoJS !== 'undefined') {
                 return CryptoJS.SHA256(plainText).toString();
@@ -420,25 +441,6 @@
 
         function closeReaderModal() { 
             document.getElementById('readerModal').style.display = 'none'; 
-        }
-
-        function toggleAuth(mode) {
-            const loginBox = document.getElementById('loginFormContainer');
-            const regBox = document.getElementById('registerFormContainer');
-            const loginBtn = document.getElementById('tabLoginBtn');
-            const regBtn = document.getElementById('tabRegisterBtn');
-
-            if (mode === 'register') {
-                loginBox.style.display = 'none'; 
-                regBox.style.display = 'block';
-                loginBtn.classList.remove('active'); 
-                regBtn.classList.add('active');
-            } else {
-                regBox.style.display = 'none'; 
-                loginBox.style.display = 'block';
-                regBtn.classList.remove('active'); 
-                loginBtn.classList.add('active');
-            }
         }
 
         async function handleRegisterSubmit(e) {
@@ -575,3 +577,272 @@
                 try {
                     db.collection("private_entries").doc(newEntry.id).set(newEntry).catch(err => console.log(err));
                     if (newEntry.isPublic) {
+                        db.collection("public_entries").doc(newEntry.id).set(newEntry).catch(err => console.log(err));
+                    }
+                } catch(e){}
+            }
+
+            document.getElementById('entryTitle').value = '';
+            document.getElementById('entryContent').value = '';
+            document.getElementById('isPublic').checked = false;
+
+            showNotice('Başarılı', 'Sayfanız güvenli bir şekilde kaydedildi!', '📝');
+            switchTab('private');
+        }
+
+        function syncPrivateCloudEntries() {
+            if (!db || !currentUser) {
+                renderPrivateFeed();
+                renderCalendarAndAnalytics();
+                return;
+            }
+
+            if (typeof privateUnsubscribe === 'function') {
+                privateUnsubscribe();
+                privateUnsubscribe = null;
+            }
+
+            try {
+                privateUnsubscribe = db.collection("private_entries")
+                  .where("userId", "==", String(currentUser.id))
+                  .onSnapshot((snapshot) => {
+                      const cloudEntries = [];
+                      snapshot.forEach(doc => {
+                          cloudEntries.push(doc.data());
+                      });
+
+                      localEntries = cloudEntries.sort((a,b) => b.timestamp - a.timestamp);
+                      localStorage.setItem('app_entries', JSON.stringify(localEntries));
+
+                      renderPrivateFeed();
+                      renderCalendarAndAnalytics();
+                  }, (err) => {
+                      renderPrivateFeed();
+                      renderCalendarAndAnalytics();
+                  });
+            } catch(e) {
+                renderPrivateFeed();
+                renderCalendarAndAnalytics();
+            }
+        }
+
+        function renderPrivateFeed() {
+            const privateFeed = document.getElementById('privateFeed');
+            if (!privateFeed) return;
+            privateFeed.innerHTML = '';
+
+            localEntries.forEach(entry => {
+                if (currentUser && String(entry.userId) === String(currentUser.id)) {
+                    const entryFont = entry.font || "'Georgia', serif";
+                    privateFeed.innerHTML += `
+                        <div class="card" onclick="openReaderModal('${escapeQuotes(entry.title)}', '${escapeQuotes(entry.content)}', '${entry.date}', '${escapeQuotes(entry.author)}', '${entry.mood}', '${entryFont}')">
+                            <div>
+                                <div class="card-header">
+                                    <span>${entry.mood}</span>
+                                    <span class="card-date">📅 ${entry.date}</span>
+                                </div>
+                                <div class="card-title" style="font-family: ${entryFont};">${entry.title}</div>
+                                <div class="card-content" style="font-family: ${entryFont};">${entry.content}</div>
+                            </div>
+                            <div class="card-footer">
+                                <span>✍️ ${entry.author}</span>
+                                <div class="card-actions" onclick="event.stopPropagation();">
+                                    ${entry.isPublic ? `<span style="color:#16a34a;">🌍 Toplulukta</span>` : `<span style="color:#d97706;">🔒 Gizli</span>`}
+                                    <button class="btn-delete" type="button" onclick="deleteEntry('${entry.id}')">🗑️ Sil</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+        }
+
+        function renderCalendarAndAnalytics() {
+            const calendarGrid = document.getElementById('calendarGrid');
+            if (!calendarGrid) return;
+
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth();
+
+            const monthNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+            document.getElementById('calMonthTitle').innerText = `${monthNames[month]} ${year}`;
+
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            calendarGrid.innerHTML = `
+                <div class="cal-day-name">Pzt</div><div class="cal-day-name">Sal</div><div class="cal-day-name">Çar</div>
+                <div class="cal-day-name">Per</div><div class="cal-day-name">Cum</div><div class="cal-day-name">Cmt</div><div class="cal-day-name">Paz</div>
+            `;
+
+            const userEntries = localEntries.filter(e => currentUser && String(e.userId) === String(currentUser.id));
+            const entryDays = userEntries.map(e => e.rawDate);
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const hasEntry = entryDays.includes(dayStr);
+                
+                calendarGrid.innerHTML += `
+                    <div class="cal-day ${hasEntry ? 'has-entry' : ''}">${day}</div>
+                `;
+            }
+
+            const moodCounts = {};
+            userEntries.forEach(e => {
+                moodCounts[e.mood] = (moodCounts[e.mood] || 0) + 1;
+            });
+
+            const total = userEntries.length || 1;
+            const moodList = document.getElementById('moodAnalyticsList');
+            moodList.innerHTML = '';
+
+            if (userEntries.length === 0) {
+                moodList.innerHTML = '<p style="color:var(--text-muted); font-size:0.85rem;">Henüz kayıtlı bir günlük yok.</p>';
+                return;
+            }
+
+            for (const [mood, count] of Object.entries(moodCounts)) {
+                const percent = Math.round((count / total) * 100);
+                moodList.innerHTML += `
+                    <div class="mood-item">
+                        <span>${mood} (${count})</span>
+                        <div class="mood-bar-bg">
+                            <div class="mood-bar-fill" style="width: ${percent}%;"></div>
+                        </div>
+                        <span style="font-weight:bold;">%${percent}</span>
+                    </div>
+                `;
+            }
+        }
+
+        function listenPublicCloudEntries() {
+            const publicFeed = document.getElementById('publicFeed');
+            if (!db) { renderPublicFallback(); return; }
+
+            try {
+                db.collection("public_entries").onSnapshot((snapshot) => {
+                    publicFeed.innerHTML = '';
+                    if (snapshot.empty) {
+                        publicFeed.innerHTML = '<p style="color:var(--text-muted);">Henüz toplulukta paylaşılan bir günlük yok.</p>';
+                        return;
+                    }
+
+                    snapshot.forEach((doc) => {
+                        const entry = doc.data();
+                        const isMyPost = currentUser && (String(entry.userId) === String(currentUser.id));
+                        const entryFont = entry.font || "'Georgia', serif";
+
+                        publicFeed.innerHTML += `
+                            <div class="card" onclick="openReaderModal('${escapeQuotes(entry.title)}', '${escapeQuotes(entry.content)}', '${entry.date}', '${escapeQuotes(entry.author)}', '${entry.mood}', '${entryFont}')">
+                                <div>
+                                    <div class="card-header">
+                                        <span>${entry.mood}</span>
+                                        <span class="card-date">📅 ${entry.date}</span>
+                                    </div>
+                                    <div class="card-title" style="font-family: ${entryFont};">${entry.title}</div>
+                                    <div class="card-content" style="font-family: ${entryFont};">${entry.content}</div>
+                                </div>
+                                <div class="card-footer">
+                                    <span>✍️ ${entry.author}</span>
+                                    <div class="card-actions" onclick="event.stopPropagation();">
+                                        <button class="btn-like" type="button" onclick="likeCloudEntry('${entry.id}', ${entry.likes || 0})">❤️ ${entry.likes || 0}</button>
+                                        ${isMyPost ? `<button class="btn-delete" type="button" onclick="deleteCloudEntry('${entry.id}')">🗑️ Sil</button>` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }, () => { renderPublicFallback(); });
+            } catch(e) { renderPublicFallback(); }
+        }
+
+        function renderPublicFallback() {
+            const publicFeed = document.getElementById('publicFeed');
+            publicFeed.innerHTML = '';
+            localEntries.filter(e => e.isPublic).forEach(entry => {
+                const entryFont = entry.font || "'Georgia', serif";
+                publicFeed.innerHTML += `
+                    <div class="card" onclick="openReaderModal('${escapeQuotes(entry.title)}', '${escapeQuotes(entry.content)}', '${entry.date}', '${escapeQuotes(entry.author)}', '${entry.mood}', '${entryFont}')">
+                        <div>
+                            <div class="card-header">
+                                <span>${entry.mood}</span>
+                                <span class="card-date">📅 ${entry.date}</span>
+                            </div>
+                            <div class="card-title" style="font-family: ${entryFont};">${entry.title}</div>
+                            <div class="card-content" style="font-family: ${entryFont};">${entry.content}</div>
+                        </div>
+                        <div class="card-footer">
+                            <span>✍️ ${entry.author}</span>
+                            <button class="btn-like" type="button" onclick="event.stopPropagation(); likeLocalEntry('${entry.id}')">❤️ ${entry.likes || 0}</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function deleteCloudEntry(id) {
+            if (confirm('Bu topluluk gönderisini silmek istediğinizden emin misiniz?')) {
+                if (db) { 
+                    try { 
+                        db.collection("public_entries").doc(id).delete().catch(err => console.log(err));
+                        db.collection("private_entries").doc(id).delete().catch(err => console.log(err));
+                    } catch(e){} 
+                }
+                deleteEntry(id);
+            }
+        }
+
+        function deleteEntry(id) {
+            localEntries = localEntries.filter(e => e.id !== id);
+            localStorage.setItem('app_entries', JSON.stringify(localEntries));
+            
+            if (db) {
+                try { 
+                    db.collection("private_entries").doc(id).delete().catch(err => console.log(err)); 
+                } catch(e){}
+            }
+            renderPrivateFeed();
+            renderCalendarAndAnalytics();
+        }
+
+        function likeCloudEntry(id, currentLikes) {
+            if (db) { try { db.collection("public_entries").doc(id).update({ likes: currentLikes + 1 }); } catch(e){} }
+        }
+
+        function likeLocalEntry(id) {
+            const entry = localEntries.find(e => e.id === id);
+            if (entry) {
+                entry.likes = (entry.likes || 0) + 1;
+                localStorage.setItem('app_entries', JSON.stringify(localEntries));
+                renderPublicFallback();
+            }
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+
+            if (tabName === 'write') {
+                document.querySelectorAll('.nav-btn')[0].classList.add('active');
+                document.getElementById('writeSection').classList.add('active');
+            } else if (tabName === 'private') {
+                document.querySelectorAll('.nav-btn')[1].classList.add('active');
+                document.getElementById('privateSection').classList.add('active');
+                syncPrivateCloudEntries();
+            } else if (tabName === 'public') {
+                document.querySelectorAll('.nav-btn')[2].classList.add('active');
+                document.getElementById('publicSection').classList.add('active');
+            }
+        }
+
+        function escapeHTML(str) {
+            if (!str) return '';
+            return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
+        }
+
+        function escapeQuotes(str) {
+            if (!str) return '';
+            return str.replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/\n/g, '\\n');
+        }
+    </script>
+</body>
+</html>
