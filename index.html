@@ -425,7 +425,6 @@
             document.getElementById('customModal').style.display = 'none'; 
         }
 
-        // KARTLARA TIKLANDIĞINDA OKUMA PENCERESİNİ AÇAN GÜVENLİ FONKSİYON
         function openReaderById(id) {
             const entry = localEntries.find(e => String(e.id) === String(id));
             if (!entry) return;
@@ -654,7 +653,7 @@
                                 <span>✍️ ${entry.author}</span>
                                 <div class="card-actions" onclick="event.stopPropagation();">
                                     ${entry.isPublic ? `<span style="color:#16a34a;">🌍 Toplulukta</span>` : `<span style="color:#d97706;">🔒 Gizli</span>`}
-                                    <button class="btn-delete" type="button" onclick="deleteEntry('${entry.id}')">🗑️ Sil</button>
+                                    <button class="btn-delete" type="button" onclick="event.stopPropagation(); deleteEntry('${entry.id}')">🗑️ Sil</button>
                                 </div>
                             </div>
                         </div>
@@ -750,8 +749,8 @@
                                 <div class="card-footer">
                                     <span>✍️ ${entry.author}</span>
                                     <div class="card-actions" onclick="event.stopPropagation();">
-                                        <button class="btn-like" type="button" onclick="likeCloudEntry('${entry.id}', ${entry.likes || 0})">❤️ ${entry.likes || 0}</button>
-                                        ${isMyPost ? `<button class="btn-delete" type="button" onclick="deleteCloudEntry('${entry.id}')">🗑️ Sil</button>` : ''}
+                                        <button class="btn-like" type="button" onclick="event.stopPropagation(); likeCloudEntry('${entry.id}', ${entry.likes || 0})">❤️ ${entry.likes || 0}</button>
+                                        ${isMyPost ? `<button class="btn-delete" type="button" onclick="event.stopPropagation(); deleteCloudEntry('${entry.id}')">🗑️ Sil</button>` : ''}
                                     </div>
                                 </div>
                             </div>
@@ -803,4 +802,52 @@
             
             if (db) {
                 try { 
-                    db.collection("private_entries").doc(id).delete().catch(err
+                    db.collection("private_entries").doc(id).delete().catch(err => console.log(err)); 
+                } catch(e){}
+            }
+            renderPrivateFeed();
+            renderCalendarAndAnalytics();
+        }
+
+        function likeCloudEntry(id, currentLikes) {
+            if (db) { try { db.collection("public_entries").doc(id).update({ likes: currentLikes + 1 }); } catch(e){} }
+        }
+
+        function likeLocalEntry(id) {
+            const entry = localEntries.find(e => e.id === id);
+            if (entry) {
+                entry.likes = (entry.likes || 0) + 1;
+                localStorage.setItem('app_entries', JSON.stringify(localEntries));
+                renderPublicFallback();
+            }
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+
+            if (tabName === 'write') {
+                document.querySelectorAll('.nav-btn')[0].classList.add('active');
+                document.getElementById('writeSection').classList.add('active');
+            } else if (tabName === 'private') {
+                document.querySelectorAll('.nav-btn')[1].classList.add('active');
+                document.getElementById('privateSection').classList.add('active');
+                syncPrivateCloudEntries();
+            } else if (tabName === 'public') {
+                document.querySelectorAll('.nav-btn')[2].classList.add('active');
+                document.getElementById('publicSection').classList.add('active');
+            }
+        }
+
+        function escapeHTML(str) {
+            if (!str) return '';
+            return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
+        }
+
+        function escapeQuotes(str) {
+            if (!str) return '';
+            return str.replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/\n/g, '\\n');
+        }
+    </script>
+</body>
+</html>
