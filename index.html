@@ -113,7 +113,7 @@
             padding: 35px;
             position: relative;
             min-height: 480px;
-            overflow: hidden; /* Fotoğraflar dışarı taşmasın */
+            overflow: hidden;
         }
         .book-page::before {
             content: '';
@@ -158,21 +158,22 @@
         .custom-file-btn:hover { background: #42261a; transform: translateY(-1px); }
         .custom-file-btn.disabled { opacity: 0.5; cursor: not-allowed; }
 
-        /* SÜRÜKLENEBİLİR BANTLI POLAROID FOTOĞRAF STİLİ */
+        /* SÜRÜKLENEBİLİR BANTLI POLAROID FOTOĞRAF STİLİ (MOBİL SÜRÜKLEME DESTEKLİ) */
         .draggable-polaroid {
             position: absolute;
             background: #ffffff;
             padding: 6px 6px 14px 6px;
             box-shadow: 0 6px 15px rgba(0,0,0,0.2);
             border: 1px solid #ddd;
-            width: 130px;
+            width: 120px;
             cursor: grab;
             z-index: 10;
             user-select: none;
+            touch-action: none; /* Mobilde sayfa kaymasını engelleyip fotoğrafa odaklar */
             border-radius: 2px;
             transition: transform 0.1s;
         }
-        .draggable-polaroid:active { cursor: grabbing; z-index: 20; transform: scale(1.03); }
+        .draggable-polaroid:active { cursor: grabbing; z-index: 20; transform: scale(1.05); }
         .draggable-polaroid::before {
             content: '';
             position: absolute;
@@ -186,7 +187,7 @@
         }
         .draggable-polaroid img {
             width: 100%;
-            height: 95px;
+            height: 90px;
             object-fit: cover;
             border-radius: 2px;
             display: block;
@@ -200,15 +201,16 @@
             color: white;
             border: none;
             border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            font-size: 0.7rem;
+            width: 22px;
+            height: 22px;
+            font-size: 0.75rem;
             font-weight: bold;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 25;
         }
 
         .btn-submit {
@@ -294,7 +296,6 @@
             <h2 id="readTitle" style="font-size: 1.6rem; margin-bottom: 15px; position: relative; z-index: 5;">Günlük Başlığı</h2>
             <div id="readContent" style="font-size: 1.05rem; line-height: 1.8; white-space: pre-wrap; margin-bottom: 25px; position: relative; z-index: 5;">Günlük içeriği...</div>
             
-            <!-- OKUMA SAYFASINDAKİ YAPISKAN FOTOĞRAFLARIN ÇIKACAĞI KAP ALANI -->
             <div id="readPhotosLayer"></div>
 
             <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--book-border); padding-top: 15px; position: relative; z-index: 5;">
@@ -338,8 +339,8 @@
                 </div>
 
                 <div class="about-card">
-                    <h3>🖼️ Sürüklenebilir Polaroid Fotoğraflar</h3>
-                    <p>Sayfalarınıza en fazla 3 adet anı fotoğrafı ekleyebilir, bunları sayfa üzerinde dilediğiniz yere sürükleyip yapıştırabilirsiniz.</p>
+                    <h3>🖼️ Mobil & Masaüstü Sürüklenebilir Fotoğraflar</h3>
+                    <p>Sayfalarınıza en fazla 3 adet anı fotoğrafı ekleyebilir, hem dokunmatik ekranlarda hem de bilgisayarda dilediğiniz yere sürükleyebilirsiniz.</p>
                 </div>
 
                 <div class="about-card">
@@ -423,7 +424,6 @@
                             </select>
                         </div>
 
-                        <!-- GÖRSELLEŞTİRİLMİŞ ÖZEL DOSYA SEÇME BUTONU -->
                         <div style="flex: 1; min-width: 220px;">
                             <label style="font-size: 0.85rem; font-weight: bold; color: var(--book-text); display: block; margin-bottom: 4px;">🖼️ Polaroid Fotoğraflar (Max 3):</label>
                             <input type="file" id="entryPhoto" accept="image/*" onchange="handlePhotoSelect(event)" style="display: none;">
@@ -436,7 +436,6 @@
 
                     <textarea id="entryContent" placeholder="Sevgili günlük, bugün..." required style="min-height: 220px; font-family: 'Georgia', serif;"></textarea>
 
-                    <!-- SÜRÜKLENEBİLİR FOTOĞRAFLARIN EKLENECEĞİ TUVAL ALANI -->
                     <div id="dragPhotoCanvas"></div>
 
                     <div style="margin: 15px 0; position: relative; z-index: 5;">
@@ -507,7 +506,6 @@
         let publicEntries = [];
         let privateUnsubscribe = null;
         
-        // MAKSİMUM 3 FOTOĞRAF DİZİSİ [{ id, src, x, y, rot }]
         let activePhotos = [];
 
         window.onload = function() {
@@ -563,7 +561,6 @@
             document.getElementById('entryContent').style.fontFamily = font;
         }
 
-        /* FOTOĞRAF SEÇME VE MAKSİMUM 3 KONTROLÜ */
         function handlePhotoSelect(event) {
             if (activePhotos.length >= 3) {
                 showNotice('Sınıra Ulaşıldı', 'Bir sayfaya en fazla 3 fotoğraf ekleyebilirsiniz.', '⚠️');
@@ -586,7 +583,7 @@
                 img.src = e.target.result;
                 img.onload = function() {
                     const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 500;
+                    const MAX_WIDTH = 450;
                     const scale = MAX_WIDTH / img.width;
                     
                     if (scale < 1) {
@@ -602,12 +599,11 @@
 
                     const photoBase64 = canvas.toDataURL('image/jpeg', 0.7);
                     
-                    // Varsayılan Konum (Rastgele hafif dönme açısı)
                     const photoObj = {
                         id: 'photo_' + Date.now(),
                         src: photoBase64,
-                        x: 50 + (activePhotos.length * 40),
-                        y: 180 + (activePhotos.length * 20),
+                        x: 30 + (activePhotos.length * 35),
+                        y: 160 + (activePhotos.length * 15),
                         rot: (Math.random() * 12 - 6).toFixed(1)
                     };
 
@@ -654,44 +650,86 @@
             });
         }
 
-        /* SÜRÜKLE BIRAK (DRAG & DROP) MOTORU */
+        /* ÇAPRAZ PLATFORM (MASEÜSTÜ + MOBİL DOKUNMATİK) SÜRÜKLEME MOTORU */
         function makeDraggable(element, photoObj) {
-            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-            element.onmousedown = dragMouseDown;
+            let startX = 0, startY = 0, initialLeft = 0, initialTop = 0;
 
-            function dragMouseDown(e) {
+            // MOUSE (FARE) DİNLEYİCİLERİ
+            element.addEventListener('mousedown', startDragMouse);
+            
+            // TOUCH (MOBİL DOKUNMATİK) DİNLEYİCİLERİ
+            element.addEventListener('touchstart', startDragTouch, { passive: false });
+
+            function startDragMouse(e) {
                 if (e.target.classList.contains('btn-remove-photo')) return;
                 e.preventDefault();
-                pos3 = e.clientX;
-                pos4 = e.clientY;
-                document.onmouseup = closeDragElement;
-                document.onmousemove = elementDrag;
+                startX = e.clientX;
+                startY = e.clientY;
+                initialLeft = element.offsetLeft;
+                initialTop = element.offsetTop;
+
+                document.addEventListener('mousemove', moveDragMouse);
+                document.addEventListener('mouseup', stopDragMouse);
             }
 
-            function elementDrag(e) {
+            function moveDragMouse(e) {
                 e.preventDefault();
-                pos1 = pos3 - e.clientX;
-                pos2 = pos4 - e.clientY;
-                pos3 = e.clientX;
-                pos4 = e.clientY;
+                let dx = e.clientX - startX;
+                let dy = e.clientY - startY;
 
-                let newTop = element.offsetTop - pos2;
-                let newLeft = element.offsetLeft - pos1;
+                let newLeft = initialLeft + dx;
+                let newTop = initialTop + dy;
 
-                // Sınırlar içerisinde tut
-                if (newTop < 10) newTop = 10;
-                if (newLeft < 10) newLeft = 10;
+                if (newLeft < 5) newLeft = 5;
+                if (newTop < 5) newTop = 5;
 
-                element.style.top = newTop + "px";
-                element.style.left = newLeft + "px";
+                element.style.left = newLeft + 'px';
+                element.style.top = newTop + 'px';
 
                 photoObj.x = newLeft;
                 photoObj.y = newTop;
             }
 
-            function closeDragElement() {
-                document.onmouseup = null;
-                document.onmousemove = null;
+            function stopDragMouse() {
+                document.removeEventListener('mousemove', moveDragMouse);
+                document.removeEventListener('mouseup', stopDragMouse);
+            }
+
+            function startDragTouch(e) {
+                if (e.target.classList.contains('btn-remove-photo')) return;
+                e.preventDefault();
+                const touch = e.touches[0];
+                startX = touch.clientX;
+                startY = touch.clientY;
+                initialLeft = element.offsetLeft;
+                initialTop = element.offsetTop;
+
+                document.addEventListener('touchmove', moveDragTouch, { passive: false });
+                document.addEventListener('touchend', stopDragTouch);
+            }
+
+            function moveDragTouch(e) {
+                e.preventDefault();
+                const touch = e.touches[0];
+                let dx = touch.clientX - startX;
+                let dy = touch.clientY - startY;
+
+                let newLeft = initialLeft + dx;
+                let newTop = initialTop + dy;
+
+                if (newLeft < 5) newLeft = 5;
+                if (newTop < 5) newTop = 5;
+
+                element.style.left = newLeft + 'px';
+                element.style.top = newTop + 'px';
+
+                photoObj.x = newLeft;
+                photoObj.y = newTop;
+            }
+
+            function stopDragTouch() {
+                document.removeEventListener('touchmove', moveDragTouch);
+                document.removeEventListener('touchend', stopDragTouch);
             }
         }
 
@@ -722,7 +760,6 @@
             titleElem.style.fontFamily = font;
             contentElem.style.fontFamily = font;
 
-            // FOTOĞRAFLARI YERLEŞTİR
             const photosLayer = document.getElementById('readPhotosLayer');
             photosLayer.innerHTML = '';
 
@@ -881,7 +918,7 @@
                 title: escapeHTML(document.getElementById('entryTitle').value),
                 content: escapeHTML(document.getElementById('entryContent').value),
                 mood: document.getElementById('entryMood').value,
-                photos: [...activePhotos], // TÜM FOTOĞRAFLAR VE KOORDİNATLARI
+                photos: [...activePhotos],
                 font: selectedFont,
                 date: formattedDate,
                 rawDate: localRawDate,
@@ -906,7 +943,6 @@
             document.getElementById('entryContent').value = '';
             document.getElementById('isPublic').checked = false;
             
-            // FOTOĞRAF TUVALİNİ TEMİZLE
             activePhotos = [];
             updatePhotoUI();
 
