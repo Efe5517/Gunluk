@@ -104,6 +104,7 @@
         }
         input:focus, textarea:focus, select:focus { border-color: var(--accent-red); }
 
+        /* KİTAP SAYFASI VE YAPIŞKAN FOTOĞRAF STİLİ */
         .book-page {
             background-color: var(--book-paper);
             color: var(--book-text);
@@ -132,6 +133,38 @@
             background-image: repeating-linear-gradient(transparent, transparent 31px, var(--book-lines) 31px, var(--book-lines) 32px);
             background-attachment: local;
             border-bottom: none;
+        }
+
+        /* BANTLANMIŞ FOTOĞRAF (POLAROID) STİLİ */
+        .polaroid-photo {
+            background: #ffffff;
+            padding: 8px 8px 18px 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            border: 1px solid #ddd;
+            transform: rotate(3deg);
+            max-width: 180px;
+            position: relative;
+            margin: 10px auto;
+            border-radius: 2px;
+        }
+        .polaroid-photo::before {
+            content: '';
+            position: absolute;
+            top: -12px;
+            left: 30%;
+            width: 50px;
+            height: 18px;
+            background: rgba(240, 230, 200, 0.6);
+            border: 1px solid rgba(200, 190, 150, 0.5);
+            transform: rotate(-5deg);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .polaroid-photo img {
+            width: 100%;
+            height: 130px;
+            object-fit: cover;
+            border-radius: 2px;
+            display: block;
         }
 
         .btn-submit {
@@ -172,7 +205,7 @@
 
         .mood-bar-container { margin-top: 10px; }
         .mood-item { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; font-size: 0.85rem; }
-        .mood-bar-bg { width: 60%; background: var(--bg-input); height: 8px; border-radius: 4px; overflow: hidden; border: 1px solid var(--border-color); }
+        .mood-bar-bg { width: 55%; background: var(--bg-input); height: 8px; border-radius: 4px; overflow: hidden; border: 1px solid var(--border-color); }
         .mood-bar-fill { height: 100%; background-color: var(--accent-red); border-radius: 4px; }
 
         .modal-overlay {
@@ -206,12 +239,21 @@
         </div>
     </div>
 
+    <!-- OKUMA MODALİ (FOTOĞRAF ALANI EKLENDİ) -->
     <div id="readerModal" class="modal-overlay">
         <div class="reader-modal-box book-page">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--book-border); padding-bottom: 10px;">
                 <span id="readMood" style="font-size: 1.2rem;">😊 Mutlu</span>
                 <span id="readDate" style="font-size: 0.85rem; font-weight: bold; color: var(--accent-red);">Tarih</span>
             </div>
+            
+            <!-- EĞER FOTOĞRAF VARSA BURADA POLAROID OLARAK ÇIKACAK -->
+            <div id="readPhotoContainer" style="display: none; text-align: center; margin-bottom: 20px;">
+                <div class="polaroid-photo">
+                    <img id="readPhotoImg" src="" alt="Günlük Anısı">
+                </div>
+            </div>
+
             <h2 id="readTitle" style="font-size: 1.6rem; margin-bottom: 15px;">Günlük Başlığı</h2>
             <div id="readContent" style="font-size: 1.05rem; line-height: 1.8; white-space: pre-wrap; margin-bottom: 25px;">Günlük içeriği...</div>
             <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--book-border); padding-top: 15px;">
@@ -240,12 +282,11 @@
 
     <main>
 
-        <!-- HAKKINDA SEKMESİ (İLK AÇILIŞTA GÖRÜNÜR) -->
         <div id="aboutSection" class="section active">
             <div class="book-page" style="margin-bottom: 25px;">
                 <h1 style="font-family: 'Georgia', serif; color: var(--book-text); margin-bottom: 10px; font-size: 1.8rem;">📖 Çevrimiçi Günlük & Topluluk Platformuna Hoş Geldiniz</h1>
                 <p style="font-size: 1.05rem; line-height: 1.7; color: var(--book-text);">
-                    Bu platform, düşüncelerinizi, günlük anılarınızı ve hislerinizi tamamen <strong>güvenli ve kişisel</strong> bir ortamda saklamanız veya isteğinize bağlı olarak <strong>toplulukla paylaşmanız</strong> için tasarlanmış dijital bir günlük alanıdır.
+                    Bu platform, düşüncelerinizi, günlük anılarınızı ve fotoğraflı anılarınızı tamamen <strong>güvenli ve kişisel</strong> bir ortamda saklamanız veya isteğinize bağlı olarak <strong>toplulukla paylaşmanız</strong> için tasarlanmış dijital bir günlük alanıdır.
                 </p>
             </div>
 
@@ -256,18 +297,18 @@
                 </div>
 
                 <div class="about-card">
-                    <h3>🌍 Topluluk Akışı ve Etkileşim</h3>
-                    <p>Yazdığınız bir anıyı toplulukla paylaşmak isterseniz "Topluluk Akışında Paylaş" seçeneğini seçebilirsiniz. Diğer yazarların paylaştığı anıları okuyup beğenebilirsiniz.</p>
+                    <h3>🖼️ Fotoğraflı Anı Defteri</h3>
+                    <p>Sayfalarınıza nostaljik polaroid tarzında fotoğraflar yapıştırabilir, anılarınızı görsellerle ölümsüzleştirebilirsiniz.</p>
                 </div>
 
                 <div class="about-card">
-                    <h3>📅 Çalışan Takvim & Duygu Analizi</h3>
-                    <p>Yazdığınız her gün otomatik olarak kişisel takviminize işlenir. Ruh hali (Mood) analiz aracı ile hangi duyguları daha yoğun yaşadığınızı grafiklerle takip edebilirsiniz.</p>
+                    <h3>🎭 Geniş Duygu Durum Analizi</h3>
+                    <p>Hasta, yorgun, heyecanlı veya mutlu... Gün gün hislerinizi kaydedin ve gelişmiş duygu analizi grafikleriyle takip edin.</p>
                 </div>
 
                 <div class="about-card">
                     <h3>🎨 Eskitme Kitap & Estetik Fontlar</h3>
-                    <p>Klasik eskitme kağıt tasarımı, edebi yazı tipleri (Georgia, Garamond, Daktilo) ve Gece/Gündüz temaları ile yazma deneyiminizi kişiselleştirebilirsiniz.</p>
+                    <p>Klasik eskitme kağıt tasarımı, edebi yazı tipleri (Georgia, Garamond, Daktilo) ve Gece/Gündüz temaları ile yazma deneyiminizi kişiselleştirin.</p>
                 </div>
             </div>
 
@@ -305,6 +346,7 @@
             </div>
         </div>
 
+        <!-- GÜNLÜK YAZMA ALANI (FOTOĞRAF YÜKLEME VE GENİŞLETİLMİŞ MOOD'LAR EKLENDİ) -->
         <div id="writeSection" class="section">
             <div class="book-page">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
@@ -324,14 +366,35 @@
                 <form onsubmit="handleJournalSubmit(event)">
                     <input type="text" id="entryTitle" placeholder="Bugünün Başlığı..." required style="font-size: 1.2rem; font-weight: bold; font-family: 'Georgia', serif;">
                     
-                    <div style="margin-bottom: 15px;">
-                        <select id="entryMood">
-                            <option value="😊 Mutlu">😊 Mutlu</option>
-                            <option value="🤔 Düşünceli">🤔 Düşünceli</option>
-                            <option value="😌 Huzurlu">😌 Huzurlu</option>
-                            <option value="😔 Üzgün">😔 Üzgün</option>
-                            <option value="⚡ Enerjik">⚡ Enerjik</option>
-                        </select>
+                    <div style="margin-bottom: 15px; display: flex; gap: 15px; flex-wrap: wrap;">
+                        <div style="flex: 1; min-width: 200px;">
+                            <label style="font-size: 0.85rem; font-weight: bold; color: var(--book-text); display: block; margin-bottom: 4px;">Bugünkü Ruh Hali:</label>
+                            <select id="entryMood" style="margin-bottom: 0;">
+                                <option value="😊 Mutlu">😊 Mutlu</option>
+                                <option value="🤔 Düşünceli">🤔 Düşünceli</option>
+                                <option value="😌 Huzurlu">😌 Huzurlu</option>
+                                <option value="😔 Üzgün">😔 Üzgün</option>
+                                <option value="⚡ Enerjik">⚡ Enerjik</option>
+                                <option value="🤒 Hasta">🤒 Hasta</option>
+                                <option value="🥱 Yorgun">🥱 Yorgun</option>
+                                <option value="🥳 Heyecanlı">🥳 Heyecanlı</option>
+                                <option value="🎨 Yaratıcı">🎨 Yaratıcı</option>
+                            </select>
+                        </div>
+
+                        <!-- FOTOĞRAF SEÇME ALANI -->
+                        <div style="flex: 1; min-width: 200px;">
+                            <label style="font-size: 0.85rem; font-weight: bold; color: var(--book-text); display: block; margin-bottom: 4px;">🖼️ Sayfaya Fotoğraf Yapıştır (İsteğe Bağlı):</label>
+                            <input type="file" id="entryPhoto" accept="image/*" onchange="previewPhoto(event)" style="padding: 8px; font-size: 0.85rem; margin-bottom: 0;">
+                        </div>
+                    </div>
+
+                    <!-- FOTOĞRAF ÖNİZLEME ALANI -->
+                    <div id="photoPreviewContainer" style="display: none; text-align: center; margin: 15px 0;">
+                        <div class="polaroid-photo" style="margin: 0 auto;">
+                            <img id="photoPreviewImg" src="" alt="Önizleme">
+                            <button type="button" onclick="removePhoto()" style="background: var(--danger); color: white; border: none; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; cursor: pointer; margin-top: 6px;">✕ Fotoğrafı Kaldır</button>
+                        </div>
                     </div>
 
                     <textarea id="entryContent" placeholder="Sevgili günlük, bugün..." required style="min-height: 200px; font-family: 'Georgia', serif;"></textarea>
@@ -403,6 +466,7 @@
         let localEntries = JSON.parse(localStorage.getItem('app_entries')) || [];
         let publicEntries = [];
         let privateUnsubscribe = null;
+        let currentPhotoBase64 = ""; // FOTOĞRAF BASE64 VERİSİ
 
         window.onload = function() {
             if (auth) {
@@ -457,6 +521,54 @@
             document.getElementById('entryContent').style.fontFamily = font;
         }
 
+        /* FOTOĞRAF YÜKLEME VE SIKIŞTIRMA (BASE64) */
+        function previewPhoto(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Maksimum 2MB kontrolü
+            if (file.size > 2 * 1024 * 1024) {
+                showNotice('Fotoğraf Boyutu Büyük', 'Lütfen 2MB\'tan küçük bir fotoğraf seçiniz.', '⚠️');
+                event.target.value = '';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = function() {
+                    // Resmi tuvalde sıkıştır
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 600;
+                    const scale = MAX_WIDTH / img.width;
+                    
+                    if (scale < 1) {
+                        canvas.width = MAX_WIDTH;
+                        canvas.height = img.height * scale;
+                    } else {
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                    }
+
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                    currentPhotoBase64 = canvas.toDataURL('image/jpeg', 0.7);
+                    
+                    document.getElementById('photoPreviewImg').src = currentPhotoBase64;
+                    document.getElementById('photoPreviewContainer').style.display = 'block';
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function removePhoto() {
+            currentPhotoBase64 = "";
+            document.getElementById('entryPhoto').value = '';
+            document.getElementById('photoPreviewContainer').style.display = 'none';
+        }
+
         function showNotice(title, text, icon = "🔔") {
             document.getElementById('modalTitle').innerText = title;
             document.getElementById('modalText').innerText = text;
@@ -483,6 +595,16 @@
             contentElem.innerText = unescapeHTML(entry.content);
             titleElem.style.fontFamily = font;
             contentElem.style.fontFamily = font;
+
+            // Fotoğraf Kontrolü
+            const photoContainer = document.getElementById('readPhotoContainer');
+            const photoImg = document.getElementById('readPhotoImg');
+            if (entry.photo) {
+                photoImg.src = entry.photo;
+                photoContainer.style.display = 'block';
+            } else {
+                photoContainer.style.display = 'none';
+            }
             
             document.getElementById('readDate').innerText = entry.date;
             document.getElementById('readAuthor').innerText = "Yazar: " + unescapeHTML(entry.author);
@@ -625,6 +747,7 @@
                 title: escapeHTML(document.getElementById('entryTitle').value),
                 content: escapeHTML(document.getElementById('entryContent').value),
                 mood: document.getElementById('entryMood').value,
+                photo: currentPhotoBase64, // FOTOĞRAF VERİSİ
                 font: selectedFont,
                 date: formattedDate,
                 rawDate: localRawDate,
@@ -648,6 +771,7 @@
             document.getElementById('entryTitle').value = '';
             document.getElementById('entryContent').value = '';
             document.getElementById('isPublic').checked = false;
+            removePhoto(); // Fotoğrafı temizle
 
             showNotice('Başarılı', 'Sayfanız güvenli bir şekilde kaydedildi!', '📝');
             switchTab('private');
@@ -701,7 +825,7 @@
                         <div class="card" onclick="openReaderById('${entry.id}')">
                             <div>
                                 <div class="card-header">
-                                    <span>${entry.mood}</span>
+                                    <span>${entry.mood} ${entry.photo ? '🖼️' : ''}</span>
                                     <span class="card-date">📅 ${entry.date}</span>
                                 </div>
                                 <div class="card-title" style="font-family: ${entryFont};">${entry.title}</div>
@@ -728,7 +852,7 @@
             const year = now.getFullYear();
             const month = now.getMonth();
 
-            const monthNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+            const monthNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylul", "Ekim", "Kasım", "Aralık"];
             document.getElementById('calMonthTitle').innerText = `${monthNames[month]} ${year}`;
 
             const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -806,7 +930,7 @@
                             <div class="card" onclick="openReaderById('${entry.id}')">
                                 <div>
                                     <div class="card-header">
-                                        <span>${entry.mood}</span>
+                                        <span>${entry.mood} ${entry.photo ? '🖼️' : ''}</span>
                                         <span class="card-date">📅 ${entry.date}</span>
                                     </div>
                                     <div class="card-title" style="font-family: ${entryFont};">${entry.title}</div>
@@ -837,7 +961,7 @@
                     <div class="card" onclick="openReaderById('${entry.id}')">
                         <div>
                             <div class="card-header">
-                                <span>${entry.mood}</span>
+                                <span>${entry.mood} ${entry.photo ? '🖼️' : ''}</span>
                                 <span class="card-date">📅 ${entry.date}</span>
                             </div>
                             <div class="card-title" style="font-family: ${entryFont};">${entry.title}</div>
@@ -891,7 +1015,6 @@
         }
 
         function switchTab(tabName) {
-            // TÜM BUTONLARIN VE SEKMELERİN SIFIRLANMASI
             const navBtns = document.querySelectorAll('.nav-btn');
             const sections = document.querySelectorAll('.section');
             
