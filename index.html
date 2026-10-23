@@ -131,13 +131,22 @@
             color: var(--book-text);
             border-radius: 0;
             position: relative;
-            z-index: 5; /* YAZILAR HER ZAMAN ÖNDE */
+            z-index: 2; /* YAZMA EKRANINDA YAZILAR DÜŞÜK KATMAN */
         }
         .book-page textarea {
             line-height: 1.8;
             background-image: repeating-linear-gradient(transparent, transparent 31px, var(--book-lines) 31px, var(--book-lines) 32px);
             background-attachment: local;
             border-bottom: none;
+        }
+
+        /* OKUMA MODALİ İÇİN YAZILARIN ÖNE GEÇMESİ */
+        .reader-modal-box input, 
+        .reader-modal-box h2, 
+        .reader-modal-box div, 
+        .reader-modal-box span {
+            position: relative;
+            z-index: 5 !important; /* OKUMA MODUNDA METİNLER FOTOĞRAFIN ÜSTÜNDE */
         }
 
         .custom-file-btn {
@@ -154,7 +163,7 @@
             transition: 0.2s;
             border: 1px solid var(--book-border);
             position: relative;
-            z-index: 5;
+            z-index: 12;
         }
         .custom-file-btn:hover { background: #42261a; transform: translateY(-1px); }
         .custom-file-btn.disabled { opacity: 0.5; cursor: not-allowed; }
@@ -168,13 +177,13 @@
             border: 1px solid #ddd;
             width: 120px;
             cursor: grab;
-            z-index: 2; /* FOTOĞRAFLAR ARKA PLANDA KALSIN */
+            z-index: 10; /* YAZARKEN FOTOĞRAFLAR ÖNDE - RAHATÇA TAŞINABİLİR */
             user-select: none;
             touch-action: none;
             border-radius: 2px;
             transition: transform 0.1s;
         }
-        .draggable-polaroid:active { cursor: grabbing; z-index: 4; transform: scale(1.05); }
+        .draggable-polaroid:active { cursor: grabbing; z-index: 20; transform: scale(1.05); }
         .draggable-polaroid::before {
             content: '';
             position: absolute;
@@ -215,7 +224,7 @@
         }
 
         .btn-submit {
-            background-color: var(--accent-red); color: white; border: none; padding: 12px 25px; border-radius: 8px; font-weight: 700; cursor: pointer; width: 100%; transition: background 0.2s; position: relative; z-index: 5;
+            background-color: var(--accent-red); color: white; border: none; padding: 12px 25px; border-radius: 8px; font-weight: 700; cursor: pointer; width: 100%; transition: background 0.2s; position: relative; z-index: 12;
         }
         .btn-submit:hover { background-color: var(--btn-hover); }
 
@@ -290,17 +299,17 @@
     <!-- OKUMA MODALİ -->
     <div id="readerModal" class="modal-overlay">
         <div class="reader-modal-box book-page" id="readerBookPage">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--book-border); padding-bottom: 10px; position: relative; z-index: 5;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--book-border); padding-bottom: 10px;">
                 <span id="readMood" style="font-size: 1.2rem;">😊 Mutlu</span>
                 <span id="readDate" style="font-size: 0.85rem; font-weight: bold; color: var(--accent-red);">Tarih</span>
             </div>
 
-            <h2 id="readTitle" style="font-size: 1.6rem; margin-bottom: 15px; position: relative; z-index: 5;">Günlük Başlığı</h2>
-            <div id="readContent" style="font-size: 1.05rem; line-height: 1.8; white-space: pre-wrap; margin-bottom: 25px; position: relative; z-index: 5;">Günlük içeriği...</div>
+            <h2 id="readTitle" style="font-size: 1.6rem; margin-bottom: 15px;">Günlük Başlığı</h2>
+            <div id="readContent" style="font-size: 1.05rem; line-height: 1.8; white-space: pre-wrap; margin-bottom: 25px;">Günlük içeriği...</div>
             
             <div id="readPhotosLayer"></div>
 
-            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--book-border); padding-top: 15px; position: relative; z-index: 5;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--book-border); padding-top: 15px;">
                 <span id="readAuthor" style="font-size: 0.9rem; font-style: italic;">Yazar</span>
                 <button class="btn-submit" type="button" style="width: auto; padding: 8px 20px; background: #2b1810;" onclick="closeReaderModal()">Kapat</button>
             </div>
@@ -393,7 +402,7 @@
         <!-- GÜNLÜK YAZMA ALANI -->
         <div id="writeSection" class="section">
             <div class="book-page" id="writeBookPage">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; position: relative; z-index: 5;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; position: relative; z-index: 12;">
                     <h2 style="font-family: 'Georgia', serif; color: var(--book-text);">✍️ Sayfaya Not Bırak</h2>
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <label style="font-size: 0.85rem; font-weight: bold; color: var(--book-text);">Yazı Tipi:</label>
@@ -410,7 +419,7 @@
                 <form onsubmit="handleJournalSubmit(event)">
                     <input type="text" id="entryTitle" placeholder="Bugünün Başlığı..." required style="font-size: 1.2rem; font-weight: bold; font-family: 'Georgia', serif;">
                     
-                    <div style="margin-bottom: 15px; display: flex; gap: 15px; flex-wrap: wrap; align-items: center; position: relative; z-index: 5;">
+                    <div style="margin-bottom: 15px; display: flex; gap: 15px; flex-wrap: wrap; align-items: center; position: relative; z-index: 12;">
                         <div style="flex: 1; min-width: 180px;">
                             <label style="font-size: 0.85rem; font-weight: bold; color: var(--book-text); display: block; margin-bottom: 4px;">Bugünkü Ruh Hali:</label>
                             <select id="entryMood" style="margin-bottom: 0;">
@@ -440,7 +449,7 @@
 
                     <div id="dragPhotoCanvas"></div>
 
-                    <div style="margin: 15px 0; position: relative; z-index: 5;">
+                    <div style="margin: 15px 0; position: relative; z-index: 12;">
                         <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--book-text);">
                             <input type="checkbox" id="isPublic">
                             <span>🌍 Bu sayfayı Topluluk Akışında Paylaş</span>
@@ -642,6 +651,7 @@
                 div.style.left = p.x + 'px';
                 div.style.top = p.y + 'px';
                 div.style.transform = `rotate(${p.rot}deg)`;
+                div.style.zIndex = '10'; // YAZARKEN FOTOĞRAFLAR HER ZAMAN ÖNDE (SÜRÜKLENEBİLİR)
                 div.innerHTML = `
                     <button class="btn-remove-photo" type="button" onclick="removePhotoById('${p.id}')">✕</button>
                     <img src="${p.src}" alt="Anı">
@@ -652,7 +662,7 @@
             });
         }
 
-        /* SINIRSIZ (ÖZGÜR) ÇAPRAZ PLATFORM SÜRÜKLEME MOTORU */
+        /* ÇAPRAZ PLATFORM SÜRÜKLEME MOTORU */
         function makeDraggable(element, photoObj) {
             let startX = 0, startY = 0, initialLeft = 0, initialTop = 0;
 
@@ -737,7 +747,7 @@
             document.getElementById('customModal').style.display = 'none'; 
         }
 
-        /* OKUMA MODALİNDE SINIRSIZ YERLEŞİM VE ÖNDE KALAN YAZILAR */
+        /* OKUMA MODALİNDE SADECE FOTOĞRAFLAR ARKA PLAN KALSIN */
         function openReaderById(id) {
             let entry = localEntries.find(e => String(e.id) === String(id));
             if (!entry) {
@@ -767,7 +777,7 @@
                 div.style.top = (p.y || (150 + index * 30)) + 'px';
                 div.style.transform = `rotate(${p.rot || 0}deg)`;
                 div.style.cursor = 'default';
-                div.style.zIndex = '2'; // FOTOĞRAFLAR YAZININ ARKASINDA TAVIR ALIR
+                div.style.zIndex = '2'; // SADECE OKUMA MODUNDA FOTOĞRAFLAR ARKA PLANDA
                 div.innerHTML = `<img src="${p.src}" alt="Anı">`;
                 photosLayer.appendChild(div);
             });
