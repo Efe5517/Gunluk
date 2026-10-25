@@ -104,16 +104,15 @@
         }
         input:focus, textarea:focus, select:focus { border-color: var(--accent-red); }
 
-        /* KİTAP SAYFASI DOKUSU VE TUVAL ALANI */
+        /* KİTAP SAYFASI DOKUSU */
         .book-page {
             background-color: var(--book-paper);
             color: var(--book-text);
             border: 2px solid var(--book-border);
             border-radius: 10px;
-            padding: 35px;
+            padding: 30px;
             position: relative;
             min-height: 480px;
-            overflow: hidden;
         }
         .book-page::before {
             content: '';
@@ -130,8 +129,6 @@
             border-bottom: 1px dashed var(--book-border);
             color: var(--book-text);
             border-radius: 0;
-            position: relative;
-            z-index: 2; /* YAZMA EKRANINDA YAZILAR DÜŞÜK KATMAN */
         }
         .book-page textarea {
             line-height: 1.8;
@@ -140,73 +137,67 @@
             border-bottom: none;
         }
 
-        /* OKUMA MODALİ İÇİN YAZILARIN ÖNE GEÇMESİ */
-        .reader-modal-box input, 
-        .reader-modal-box h2, 
-        .reader-modal-box div, 
-        .reader-modal-box span {
-            position: relative;
-            z-index: 5 !important; /* OKUMA MODUNDA METİNLER FOTOĞRAFIN ÜSTÜNDE */
+        /* 3 BÖLMELİ FOTOĞRAF DÜZENİ YAPI VE DİZİLİMİ */
+        .journal-layout-container {
+            display: grid;
+            grid-template-columns: 140px 1fr 140px;
+            gap: 15px;
+            align-items: start;
+            margin-bottom: 15px;
+        }
+        @media (max-width: 768px) {
+            .journal-layout-container {
+                grid-template-columns: 1fr;
+            }
         }
 
-        .custom-file-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: #2b1810;
-            color: #f4e8c1;
-            padding: 10px 18px;
+        .photo-slot {
+            background: rgba(255, 255, 255, 0.4);
+            border: 2px dashed var(--book-border);
             border-radius: 8px;
-            font-size: 0.85rem;
-            font-weight: bold;
+            min-height: 160px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
             cursor: pointer;
-            transition: 0.2s;
-            border: 1px solid var(--book-border);
             position: relative;
-            z-index: 12;
+            transition: all 0.2s ease;
+            overflow: hidden;
+            padding: 5px;
         }
-        .custom-file-btn:hover { background: #42261a; transform: translateY(-1px); }
-        .custom-file-btn.disabled { opacity: 0.5; cursor: not-allowed; }
-
-        /* POLAROID FOTOĞRAF STİLİ */
-        .draggable-polaroid {
-            position: absolute;
+        .photo-slot:hover {
+            background: rgba(255, 255, 255, 0.7);
+            border-color: var(--accent-red);
+        }
+        .photo-slot.has-image {
+            border-style: solid;
             background: #ffffff;
-            padding: 6px 6px 14px 6px;
-            box-shadow: 0 6px 15px rgba(0,0,0,0.2);
-            border: 1px solid #ddd;
-            width: 120px;
-            cursor: grab;
-            z-index: 10; /* YAZARKEN FOTOĞRAFLAR ÖNDE - RAHATÇA TAŞINABİLİR */
-            user-select: none;
-            touch-action: none;
-            border-radius: 2px;
-            transition: transform 0.1s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            padding: 6px 6px 12px 6px;
         }
-        .draggable-polaroid:active { cursor: grabbing; z-index: 20; transform: scale(1.05); }
-        .draggable-polaroid::before {
-            content: '';
-            position: absolute;
-            top: -10px;
-            left: 30%;
-            width: 40px;
-            height: 14px;
-            background: rgba(240, 230, 200, 0.75);
-            border: 1px solid rgba(200, 190, 150, 0.6);
-            transform: rotate(-4deg);
-        }
-        .draggable-polaroid img {
+        .photo-slot img {
             width: 100%;
-            height: 90px;
+            height: 130px;
             object-fit: cover;
-            border-radius: 2px;
-            display: block;
-            pointer-events: none;
+            border-radius: 4px;
         }
-        .draggable-polaroid .btn-remove-photo {
+        .photo-slot-plus {
+            font-size: 2rem;
+            color: var(--book-text);
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+        .photo-slot-label {
+            font-size: 0.75rem;
+            font-weight: bold;
+            color: var(--book-text);
+            text-align: center;
+        }
+        .photo-slot-remove {
             position: absolute;
-            top: -8px;
-            right: -8px;
+            top: 5px;
+            right: 5px;
             background: var(--danger);
             color: white;
             border: none;
@@ -220,7 +211,19 @@
             align-items: center;
             justify-content: center;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            z-index: 25;
+            z-index: 10;
+        }
+
+        /* ALT BÖLME STİLİ */
+        .bottom-slot-container {
+            margin-top: 15px;
+            margin-bottom: 15px;
+        }
+        .bottom-slot {
+            min-height: 140px;
+        }
+        .bottom-slot img {
+            height: 180px;
         }
 
         .btn-submit {
@@ -275,7 +278,7 @@
         }
 
         .reader-modal-box {
-            max-width: 800px; width: 95%; min-height: 520px; max-height: 88vh; overflow-y: auto; text-align: left; position: relative; padding: 35px;
+            max-width: 850px; width: 95%; min-height: 520px; max-height: 88vh; overflow-y: auto; text-align: left; position: relative; padding: 35px;
         }
 
         .about-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-top: 20px; }
@@ -296,7 +299,7 @@
         </div>
     </div>
 
-    <!-- OKUMA MODALİ -->
+    <!-- OKUMA MODALİ (SABİT 3 BÖLMELİ YAPILANDIRMA) -->
     <div id="readerModal" class="modal-overlay">
         <div class="reader-modal-box book-page" id="readerBookPage">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--book-border); padding-bottom: 10px;">
@@ -305,11 +308,25 @@
             </div>
 
             <h2 id="readTitle" style="font-size: 1.6rem; margin-bottom: 15px;">Günlük Başlığı</h2>
-            <div id="readContent" style="font-size: 1.05rem; line-height: 1.8; white-space: pre-wrap; margin-bottom: 25px;">Günlük içeriği...</div>
             
-            <div id="readPhotosLayer"></div>
+            <!-- OKUMA ALANI GRID DÜZENİ -->
+            <div class="journal-layout-container" id="readLayoutContainer">
+                <div id="readSlotLeftContainer" style="display: none;">
+                    <div class="photo-slot has-image" id="readSlotLeft"></div>
+                </div>
 
-            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--book-border); padding-top: 15px;">
+                <div id="readContent" style="font-size: 1.05rem; line-height: 1.8; white-space: pre-wrap;">Günlük içeriği...</div>
+
+                <div id="readSlotRightContainer" style="display: none;">
+                    <div class="photo-slot has-image" id="readSlotRight"></div>
+                </div>
+            </div>
+
+            <div class="bottom-slot-container" id="readSlotBottomContainer" style="display: none;">
+                <div class="photo-slot bottom-slot has-image" id="readSlotBottom"></div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--book-border); padding-top: 15px; margin-top: 20px;">
                 <span id="readAuthor" style="font-size: 0.9rem; font-style: italic;">Yazar</span>
                 <button class="btn-submit" type="button" style="width: auto; padding: 8px 20px; background: #2b1810;" onclick="closeReaderModal()">Kapat</button>
             </div>
@@ -339,7 +356,7 @@
             <div class="book-page" style="margin-bottom: 25px;">
                 <h1 style="font-family: 'Georgia', serif; color: var(--book-text); margin-bottom: 10px; font-size: 1.8rem;">📖 Çevrimiçi Günlük & Topluluk Platformuna Hoş Geldiniz</h1>
                 <p style="font-size: 1.05rem; line-height: 1.7; color: var(--book-text);">
-                    Bu platform, düşüncelerinizi, anılarınızı ve fotoğraflarınızı sürükleyip yapıştırabileceğiniz tamamen <strong>güvenli ve kişisel</strong> bir dijital anı defteridir.
+                    Bu platform, düşüncelerinizi, anılarınızı ve fotoğraflarınızı özel bölmelere ekleyebileceğiniz tamamen <strong>güvenli ve kişisel</strong> bir dijital anı defteridir.
                 </p>
             </div>
 
@@ -350,8 +367,8 @@
                 </div>
 
                 <div class="about-card">
-                    <h3>🖼️ Mobil & Masaüstü Sürüklenebilir Fotoğraflar</h3>
-                    <p>Sayfalarınıza en fazla 3 adet anı fotoğrafı ekleyebilir, hem dokunmatik ekranlarda hem de bilgisayarda dilediğiniz yere sürükleyebilirsiniz.</p>
+                    <h3>🖼️ 3 Özel Fotoğraf Bölmesi</h3>
+                    <p>Sayfalarınıza Sağ, Sol ve Alt olmak üzere 3 özel bölmede anı fotoğrafları ekleyebilirsiniz. Fotoğraf konulmayan bölmeler okuma modunda otomatik olarak gizlenir.</p>
                 </div>
 
                 <div class="about-card">
@@ -402,7 +419,7 @@
         <!-- GÜNLÜK YAZMA ALANI -->
         <div id="writeSection" class="section">
             <div class="book-page" id="writeBookPage">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; position: relative; z-index: 12;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
                     <h2 style="font-family: 'Georgia', serif; color: var(--book-text);">✍️ Sayfaya Not Bırak</h2>
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <label style="font-size: 0.85rem; font-weight: bold; color: var(--book-text);">Yazı Tipi:</label>
@@ -416,40 +433,56 @@
                     </div>
                 </div>
 
+                <!-- GİZLİ DOSYA SEÇİCİLER -->
+                <input type="file" id="fileSlotLeft" accept="image/*" onchange="handleSlotPhotoSelect(event, 'left')" style="display: none;">
+                <input type="file" id="fileSlotRight" accept="image/*" onchange="handleSlotPhotoSelect(event, 'right')" style="display: none;">
+                <input type="file" id="fileSlotBottom" accept="image/*" onchange="handleSlotPhotoSelect(event, 'bottom')" style="display: none;">
+
                 <form onsubmit="handleJournalSubmit(event)">
                     <input type="text" id="entryTitle" placeholder="Bugünün Başlığı..." required style="font-size: 1.2rem; font-weight: bold; font-family: 'Georgia', serif;">
                     
-                    <div style="margin-bottom: 15px; display: flex; gap: 15px; flex-wrap: wrap; align-items: center; position: relative; z-index: 12;">
-                        <div style="flex: 1; min-width: 180px;">
-                            <label style="font-size: 0.85rem; font-weight: bold; color: var(--book-text); display: block; margin-bottom: 4px;">Bugünkü Ruh Hali:</label>
-                            <select id="entryMood" style="margin-bottom: 0;">
-                                <option value="😊 Mutlu">😊 Mutlu</option>
-                                <option value="🤔 Düşünceli">🤔 Düşünceli</option>
-                                <option value="😌 Huzurlu">😌 Huzurlu</option>
-                                <option value="😔 Üzgün">😔 Üzgün</option>
-                                <option value="⚡ Enerjik">⚡ Enerjik</option>
-                                <option value="🤒 Hasta">🤒 Hasta</option>
-                                <option value="🥱 Yorgun">🥱 Yorgun</option>
-                                <option value="🥳 Heyecanlı">🥳 Heyecanlı</option>
-                                <option value="🎨 Yaratıcı">🎨 Yaratıcı</option>
-                            </select>
+                    <div style="margin-bottom: 15px;">
+                        <label style="font-size: 0.85rem; font-weight: bold; color: var(--book-text); display: block; margin-bottom: 4px;">Bugünkü Ruh Hali:</label>
+                        <select id="entryMood" style="margin-bottom: 0;">
+                            <option value="😊 Mutlu">😊 Mutlu</option>
+                            <option value="🤔 Düşünceli">🤔 Düşünceli</option>
+                            <option value="😌 Huzurlu">😌 Huzurlu</option>
+                            <option value="😔 Üzgün">😔 Üzgün</option>
+                            <option value="⚡ Enerjik">⚡ Enerjik</option>
+                            <option value="🤒 Hasta">🤒 Hasta</option>
+                            <option value="🥱 Yorgun">🥱 Yorgun</option>
+                            <option value="🥳 Heyecanlı">🥳 Heyecanlı</option>
+                            <option value="🎨 Yaratıcı">🎨 Yaratıcı</option>
+                        </select>
+                    </div>
+
+                    <!-- 3 BÖLMELİ DÜZEN KONTROL ALANI (SOL, METİN, SAĞ) -->
+                    <div class="journal-layout-container">
+                        <!-- SOL BÖLME -->
+                        <div class="photo-slot" id="slotLeft" onclick="triggerSlotFile('left')">
+                            <span class="photo-slot-plus">+</span>
+                            <span class="photo-slot-label">Sol Fotoğraf</span>
                         </div>
 
-                        <div style="flex: 1; min-width: 220px;">
-                            <label style="font-size: 0.85rem; font-weight: bold; color: var(--book-text); display: block; margin-bottom: 4px;">🖼️ Polaroid Fotoğraflar (Max 3):</label>
-                            <input type="file" id="entryPhoto" accept="image/*" onchange="handlePhotoSelect(event)" style="display: none;">
-                            <label for="entryPhoto" class="custom-file-btn" id="lblFileBtn">
-                                <span>📷 Fotoğraf Ekle</span>
-                                <span id="photoCountBadge" style="background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 4px;">(0/3)</span>
-                            </label>
+                        <!-- METİN ALANI -->
+                        <textarea id="entryContent" placeholder="Sevgili günlük, bugün..." required style="min-height: 240px; font-family: 'Georgia', serif; margin-bottom: 0;"></textarea>
+
+                        <!-- SAĞ BÖLME -->
+                        <div class="photo-slot" id="slotRight" onclick="triggerSlotFile('right')">
+                            <span class="photo-slot-plus">+</span>
+                            <span class="photo-slot-label">Sağ Fotoğraf</span>
                         </div>
                     </div>
 
-                    <textarea id="entryContent" placeholder="Sevgili günlük, bugün..." required style="min-height: 220px; font-family: 'Georgia', serif;"></textarea>
+                    <!-- ALT BÖLME -->
+                    <div class="bottom-slot-container">
+                        <div class="photo-slot bottom-slot" id="slotBottom" onclick="triggerSlotFile('bottom')">
+                            <span class="photo-slot-plus">+</span>
+                            <span class="photo-slot-label">Alt Fotoğraf Ekle</span>
+                        </div>
+                    </div>
 
-                    <div id="dragPhotoCanvas"></div>
-
-                    <div style="margin: 15px 0; position: relative; z-index: 12;">
+                    <div style="margin: 15px 0;">
                         <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--book-text);">
                             <input type="checkbox" id="isPublic">
                             <span>🌍 Bu sayfayı Topluluk Akışında Paylaş</span>
@@ -517,7 +550,12 @@
         let publicEntries = [];
         let privateUnsubscribe = null;
         
-        let activePhotos = [];
+        // 3 SABİT BÖLME FOTOĞRAF VERİSİ
+        let slotPhotos = {
+            left: null,
+            right: null,
+            bottom: null
+        };
 
         window.onload = function() {
             if (auth) {
@@ -572,13 +610,15 @@
             document.getElementById('entryContent').style.fontFamily = font;
         }
 
-        function handlePhotoSelect(event) {
-            if (activePhotos.length >= 3) {
-                showNotice('Sınıra Ulaşıldı', 'Bir sayfaya en fazla 3 fotoğraf ekleyebilirsiniz.', '⚠️');
-                event.target.value = '';
-                return;
-            }
+        /* 3 BÖLMELİ FOTOĞRAF İŞLEMLERİ */
+        function triggerSlotFile(slotName) {
+            if (slotPhotos[slotName]) return; // Fotoğraf varsa tıklamayı tetikleme (Sil butonuna basılmalı)
+            if (slotName === 'left') document.getElementById('fileSlotLeft').click();
+            if (slotName === 'right') document.getElementById('fileSlotRight').click();
+            if (slotName === 'bottom') document.getElementById('fileSlotBottom').click();
+        }
 
+        function handleSlotPhotoSelect(event, slotName) {
             const file = event.target.files[0];
             if (!file) return;
 
@@ -594,7 +634,7 @@
                 img.src = e.target.result;
                 img.onload = function() {
                     const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 450;
+                    const MAX_WIDTH = 500;
                     const scale = MAX_WIDTH / img.width;
                     
                     if (scale < 1) {
@@ -609,131 +649,51 @@
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
                     const photoBase64 = canvas.toDataURL('image/jpeg', 0.7);
+                    slotPhotos[slotName] = photoBase64;
                     
-                    const photoObj = {
-                        id: 'photo_' + Date.now(),
-                        src: photoBase64,
-                        x: 30 + (activePhotos.length * 35),
-                        y: 160 + (activePhotos.length * 15),
-                        rot: (Math.random() * 12 - 6).toFixed(1)
-                    };
-
-                    activePhotos.push(photoObj);
-                    updatePhotoUI();
+                    renderSlotUI(slotName);
                     event.target.value = '';
                 }
             };
             reader.readAsDataURL(file);
         }
 
-        function removePhotoById(photoId) {
-            activePhotos = activePhotos.filter(p => p.id !== photoId);
-            updatePhotoUI();
+        function removeSlotPhoto(slotName, e) {
+            if (e) e.stopPropagation();
+            slotPhotos[slotName] = null;
+            renderSlotUI(slotName);
         }
 
-        function updatePhotoUI() {
-            const canvas = document.getElementById('dragPhotoCanvas');
-            const badge = document.getElementById('photoCountBadge');
-            const btn = document.getElementById('lblFileBtn');
-            
-            canvas.innerHTML = '';
-            badge.innerText = `(${activePhotos.length}/3)`;
+        function renderSlotUI(slotName) {
+            let slotElem = null;
+            let labelText = '';
 
-            if (activePhotos.length >= 3) {
-                btn.classList.add('disabled');
-            } else {
-                btn.classList.remove('disabled');
-            }
+            if (slotName === 'left') { slotElem = document.getElementById('slotLeft'); labelText = 'Sol Fotoğraf'; }
+            if (slotName === 'right') { slotElem = document.getElementById('slotRight'); labelText = 'Sağ Fotoğraf'; }
+            if (slotName === 'bottom') { slotElem = document.getElementById('slotBottom'); labelText = 'Alt Fotoğraf Ekle'; }
 
-            activePhotos.forEach(p => {
-                const div = document.createElement('div');
-                div.className = 'draggable-polaroid';
-                div.style.left = p.x + 'px';
-                div.style.top = p.y + 'px';
-                div.style.transform = `rotate(${p.rot}deg)`;
-                div.style.zIndex = '10'; // YAZARKEN FOTOĞRAFLAR HER ZAMAN ÖNDE (SÜRÜKLENEBİLİR)
-                div.innerHTML = `
-                    <button class="btn-remove-photo" type="button" onclick="removePhotoById('${p.id}')">✕</button>
-                    <img src="${p.src}" alt="Anı">
+            if (!slotElem) return;
+
+            if (slotPhotos[slotName]) {
+                slotElem.classList.add('has-image');
+                slotElem.innerHTML = `
+                    <button class="photo-slot-remove" type="button" onclick="removeSlotPhoto('${slotName}', event)">✕</button>
+                    <img src="${slotPhotos[slotName]}" alt="Fotoğraf">
                 `;
-                
-                makeDraggable(div, p);
-                canvas.appendChild(div);
-            });
+            } else {
+                slotElem.classList.remove('has-image');
+                slotElem.innerHTML = `
+                    <span class="photo-slot-plus">+</span>
+                    <span class="photo-slot-label">${labelText}</span>
+                `;
+            }
         }
 
-        /* ÇAPRAZ PLATFORM SÜRÜKLEME MOTORU */
-        function makeDraggable(element, photoObj) {
-            let startX = 0, startY = 0, initialLeft = 0, initialTop = 0;
-
-            element.addEventListener('mousedown', startDragMouse);
-            element.addEventListener('touchstart', startDragTouch, { passive: false });
-
-            function startDragMouse(e) {
-                if (e.target.classList.contains('btn-remove-photo')) return;
-                e.preventDefault();
-                startX = e.clientX;
-                startY = e.clientY;
-                initialLeft = element.offsetLeft;
-                initialTop = element.offsetTop;
-
-                document.addEventListener('mousemove', moveDragMouse);
-                document.addEventListener('mouseup', stopDragMouse);
-            }
-
-            function moveDragMouse(e) {
-                e.preventDefault();
-                let dx = e.clientX - startX;
-                let dy = e.clientY - startY;
-
-                let newLeft = initialLeft + dx;
-                let newTop = initialTop + dy;
-
-                element.style.left = newLeft + 'px';
-                element.style.top = newTop + 'px';
-
-                photoObj.x = newLeft;
-                photoObj.y = newTop;
-            }
-
-            function stopDragMouse() {
-                document.removeEventListener('mousemove', moveDragMouse);
-                document.removeEventListener('mouseup', stopDragMouse);
-            }
-
-            function startDragTouch(e) {
-                if (e.target.classList.contains('btn-remove-photo')) return;
-                e.preventDefault();
-                const touch = e.touches[0];
-                startX = touch.clientX;
-                startY = touch.clientY;
-                initialLeft = element.offsetLeft;
-                initialTop = element.offsetTop;
-
-                document.addEventListener('touchmove', moveDragTouch, { passive: false });
-                document.addEventListener('touchend', stopDragTouch);
-            }
-
-            function moveDragTouch(e) {
-                e.preventDefault();
-                const touch = e.touches[0];
-                let dx = touch.clientX - startX;
-                let dy = touch.clientY - startY;
-
-                let newLeft = initialLeft + dx;
-                let newTop = initialTop + dy;
-
-                element.style.left = newLeft + 'px';
-                element.style.top = newTop + 'px';
-
-                photoObj.x = newLeft;
-                photoObj.y = newTop;
-            }
-
-            function stopDragTouch() {
-                document.removeEventListener('touchmove', moveDragTouch);
-                document.removeEventListener('touchend', stopDragTouch);
-            }
+        function resetAllSlots() {
+            slotPhotos = { left: null, right: null, bottom: null };
+            renderSlotUI('left');
+            renderSlotUI('right');
+            renderSlotUI('bottom');
         }
 
         function showNotice(title, text, icon = "🔔") {
@@ -747,7 +707,7 @@
             document.getElementById('customModal').style.display = 'none'; 
         }
 
-        /* OKUMA MODALİNDE SADECE FOTOĞRAFLAR ARKA PLAN KALSIN */
+        /* OKUMA MODALİNDE SADECE FOTOĞRAF OLAN BÖLMELERİ GÖSTER */
         function openReaderById(id) {
             let entry = localEntries.find(e => String(e.id) === String(id));
             if (!entry) {
@@ -764,23 +724,45 @@
             titleElem.style.fontFamily = font;
             contentElem.style.fontFamily = font;
 
-            const photosLayer = document.getElementById('readPhotosLayer');
-            photosLayer.innerHTML = '';
+            // Fotoğraf verilerini al (Geriye dönük uyumluluk için dizi veya obje kontrolü)
+            let slots = entry.slotPhotos || {};
+            if (!entry.slotPhotos && entry.photos && entry.photos.length > 0) {
+                slots = {
+                    left: entry.photos[0] ? entry.photos[0].src : null,
+                    right: entry.photos[1] ? entry.photos[1].src : null,
+                    bottom: entry.photos[2] ? entry.photos[2].src : null
+                };
+            }
 
-            const entryPhotos = entry.photos || (entry.photo ? [{ src: entry.photo, x: 20, y: 150, rot: 3 }] : []);
+            // SOL BÖLME
+            const slotLeftContainer = document.getElementById('readSlotLeftContainer');
+            const slotLeft = document.getElementById('readSlotLeft');
+            if (slots.left) {
+                slotLeft.innerHTML = `<img src="${slots.left}" alt="Sol Anı">`;
+                slotLeftContainer.style.display = 'block';
+            } else {
+                slotLeftContainer.style.display = 'none';
+            }
 
-            entryPhotos.forEach((p, index) => {
-                const div = document.createElement('div');
-                div.className = 'draggable-polaroid';
-                div.style.position = 'absolute';
-                div.style.left = (p.x || (30 + index * 40)) + 'px';
-                div.style.top = (p.y || (150 + index * 30)) + 'px';
-                div.style.transform = `rotate(${p.rot || 0}deg)`;
-                div.style.cursor = 'default';
-                div.style.zIndex = '2'; // SADECE OKUMA MODUNDA FOTOĞRAFLAR ARKA PLANDA
-                div.innerHTML = `<img src="${p.src}" alt="Anı">`;
-                photosLayer.appendChild(div);
-            });
+            // SAĞ BÖLME
+            const slotRightContainer = document.getElementById('readSlotRightContainer');
+            const slotRight = document.getElementById('readSlotRight');
+            if (slots.right) {
+                slotRight.innerHTML = `<img src="${slots.right}" alt="Sağ Anı">`;
+                slotRightContainer.style.display = 'block';
+            } else {
+                slotRightContainer.style.display = 'none';
+            }
+
+            // ALT BÖLME
+            const slotBottomContainer = document.getElementById('readSlotBottomContainer');
+            const slotBottom = document.getElementById('readSlotBottom');
+            if (slots.bottom) {
+                slotBottom.innerHTML = `<img src="${slots.bottom}" alt="Alt Anı">`;
+                slotBottomContainer.style.display = 'block';
+            } else {
+                slotBottomContainer.style.display = 'none';
+            }
             
             document.getElementById('readDate').innerText = entry.date;
             document.getElementById('readAuthor').innerText = "Yazar: " + unescapeHTML(entry.author);
@@ -923,7 +905,7 @@
                 title: escapeHTML(document.getElementById('entryTitle').value),
                 content: escapeHTML(document.getElementById('entryContent').value),
                 mood: document.getElementById('entryMood').value,
-                photos: [...activePhotos],
+                slotPhotos: { ...slotPhotos }, // SAĞ, SOL VE ALT FOTOĞRAFLAR
                 font: selectedFont,
                 date: formattedDate,
                 rawDate: localRawDate,
@@ -948,8 +930,7 @@
             document.getElementById('entryContent').value = '';
             document.getElementById('isPublic').checked = false;
             
-            activePhotos = [];
-            updatePhotoUI();
+            resetAllSlots();
 
             showNotice('Başarılı', 'Sayfanız güvenli bir şekilde kaydedildi!', '📝');
             switchTab('private');
@@ -999,7 +980,7 @@
             localEntries.forEach(entry => {
                 if (currentUser && String(entry.userId) === String(currentUser.id)) {
                     const entryFont = entry.font || "'Georgia', serif";
-                    const hasPhotos = (entry.photos && entry.photos.length > 0) || entry.photo;
+                    const hasPhotos = (entry.slotPhotos && (entry.slotPhotos.left || entry.slotPhotos.right || entry.slotPhotos.bottom)) || entry.photo || (entry.photos && entry.photos.length > 0);
 
                     privateFeed.innerHTML += `
                         <div class="card" onclick="openReaderById('${entry.id}')">
@@ -1105,7 +1086,7 @@
                     publicEntries.forEach((entry) => {
                         const isMyPost = currentUser && (String(entry.userId) === String(currentUser.id));
                         const entryFont = entry.font || "'Georgia', serif";
-                        const hasPhotos = (entry.photos && entry.photos.length > 0) || entry.photo;
+                        const hasPhotos = (entry.slotPhotos && (entry.slotPhotos.left || entry.slotPhotos.right || entry.slotPhotos.bottom)) || entry.photo || (entry.photos && entry.photos.length > 0);
 
                         publicFeed.innerHTML += `
                             <div class="card" onclick="openReaderById('${entry.id}')">
@@ -1138,7 +1119,7 @@
 
             publicEntries.forEach(entry => {
                 const entryFont = entry.font || "'Georgia', serif";
-                const hasPhotos = (entry.photos && entry.photos.length > 0) || entry.photo;
+                const hasPhotos = (entry.slotPhotos && (entry.slotPhotos.left || entry.slotPhotos.right || entry.slotPhotos.bottom)) || entry.photo || (entry.photos && entry.photos.length > 0);
 
                 publicFeed.innerHTML += `
                     <div class="card" onclick="openReaderById('${entry.id}')">
