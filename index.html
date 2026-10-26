@@ -137,17 +137,40 @@
             border-bottom: none;
         }
 
-        /* 3 BÖLMELİ FOTOĞRAF DÜZENİ YAPI VE DİZİLİMİ */
+        /* DİNAMİK GRID DÜZENİ */
         .journal-layout-container {
             display: grid;
-            grid-template-columns: 140px 1fr 140px;
             gap: 15px;
             align-items: start;
             margin-bottom: 15px;
+            width: 100%;
         }
+
+        /* YAZMA MODUNDA 3 BÖLME DE VARDIR */
+        .journal-layout-container.write-mode {
+            grid-template-columns: 140px 1fr 140px;
+        }
+
+        /* OKUMA MODU DİNAMİK GRID TANIMLARI */
+        .journal-layout-container.no-photos {
+            grid-template-columns: 1fr !important;
+        }
+        .journal-layout-container.has-left {
+            grid-template-columns: 140px 1fr !important;
+        }
+        .journal-layout-container.has-right {
+            grid-template-columns: 1fr 140px !important;
+        }
+        .journal-layout-container.has-both {
+            grid-template-columns: 140px 1fr 140px !important;
+        }
+
         @media (max-width: 768px) {
-            .journal-layout-container {
-                grid-template-columns: 1fr;
+            .journal-layout-container.write-mode,
+            .journal-layout-container.has-left,
+            .journal-layout-container.has-right,
+            .journal-layout-container.has-both {
+                grid-template-columns: 1fr !important;
             }
         }
 
@@ -214,7 +237,6 @@
             z-index: 10;
         }
 
-        /* ALT BÖLME STİLİ */
         .bottom-slot-container {
             margin-top: 15px;
             margin-bottom: 15px;
@@ -299,7 +321,7 @@
         </div>
     </div>
 
-    <!-- OKUMA MODALİ (SABİT 3 BÖLMELİ YAPILANDIRMA) -->
+    <!-- OKUMA MODALİ -->
     <div id="readerModal" class="modal-overlay">
         <div class="reader-modal-box book-page" id="readerBookPage">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--book-border); padding-bottom: 10px;">
@@ -315,7 +337,7 @@
                     <div class="photo-slot has-image" id="readSlotLeft"></div>
                 </div>
 
-                <div id="readContent" style="font-size: 1.05rem; line-height: 1.8; white-space: pre-wrap;">Günlük içeriği...</div>
+                <div id="readContent" style="font-size: 1.05rem; line-height: 1.8; white-space: pre-wrap; width: 100%;">Günlük içeriği...</div>
 
                 <div id="readSlotRightContainer" style="display: none;">
                     <div class="photo-slot has-image" id="readSlotRight"></div>
@@ -433,7 +455,6 @@
                     </div>
                 </div>
 
-                <!-- GİZLİ DOSYA SEÇİCİLER -->
                 <input type="file" id="fileSlotLeft" accept="image/*" onchange="handleSlotPhotoSelect(event, 'left')" style="display: none;">
                 <input type="file" id="fileSlotRight" accept="image/*" onchange="handleSlotPhotoSelect(event, 'right')" style="display: none;">
                 <input type="file" id="fileSlotBottom" accept="image/*" onchange="handleSlotPhotoSelect(event, 'bottom')" style="display: none;">
@@ -456,25 +477,20 @@
                         </select>
                     </div>
 
-                    <!-- 3 BÖLMELİ DÜZEN KONTROL ALANI (SOL, METİN, SAĞ) -->
-                    <div class="journal-layout-container">
-                        <!-- SOL BÖLME -->
+                    <div class="journal-layout-container write-mode">
                         <div class="photo-slot" id="slotLeft" onclick="triggerSlotFile('left')">
                             <span class="photo-slot-plus">+</span>
                             <span class="photo-slot-label">Sol Fotoğraf</span>
                         </div>
 
-                        <!-- METİN ALANI -->
                         <textarea id="entryContent" placeholder="Sevgili günlük, bugün..." required style="min-height: 240px; font-family: 'Georgia', serif; margin-bottom: 0;"></textarea>
 
-                        <!-- SAĞ BÖLME -->
                         <div class="photo-slot" id="slotRight" onclick="triggerSlotFile('right')">
                             <span class="photo-slot-plus">+</span>
                             <span class="photo-slot-label">Sağ Fotoğraf</span>
                         </div>
                     </div>
 
-                    <!-- ALT BÖLME -->
                     <div class="bottom-slot-container">
                         <div class="photo-slot bottom-slot" id="slotBottom" onclick="triggerSlotFile('bottom')">
                             <span class="photo-slot-plus">+</span>
@@ -550,12 +566,7 @@
         let publicEntries = [];
         let privateUnsubscribe = null;
         
-        // 3 SABİT BÖLME FOTOĞRAF VERİSİ
-        let slotPhotos = {
-            left: null,
-            right: null,
-            bottom: null
-        };
+        let slotPhotos = { left: null, right: null, bottom: null };
 
         window.onload = function() {
             if (auth) {
@@ -610,9 +621,8 @@
             document.getElementById('entryContent').style.fontFamily = font;
         }
 
-        /* 3 BÖLMELİ FOTOĞRAF İŞLEMLERİ */
         function triggerSlotFile(slotName) {
-            if (slotPhotos[slotName]) return; // Fotoğraf varsa tıklamayı tetikleme (Sil butonuna basılmalı)
+            if (slotPhotos[slotName]) return;
             if (slotName === 'left') document.getElementById('fileSlotLeft').click();
             if (slotName === 'right') document.getElementById('fileSlotRight').click();
             if (slotName === 'bottom') document.getElementById('fileSlotBottom').click();
@@ -707,7 +717,7 @@
             document.getElementById('customModal').style.display = 'none'; 
         }
 
-        /* OKUMA MODALİNDE SADECE FOTOĞRAF OLAN BÖLMELERİ GÖSTER */
+        /* OKUMA MODALİ - DİNAMİK ESNEK BÖLME MANTIĞI */
         function openReaderById(id) {
             let entry = localEntries.find(e => String(e.id) === String(id));
             if (!entry) {
@@ -724,7 +734,6 @@
             titleElem.style.fontFamily = font;
             contentElem.style.fontFamily = font;
 
-            // Fotoğraf verilerini al (Geriye dönük uyumluluk için dizi veya obje kontrolü)
             let slots = entry.slotPhotos || {};
             if (!entry.slotPhotos && entry.photos && entry.photos.length > 0) {
                 slots = {
@@ -734,27 +743,45 @@
                 };
             }
 
-            // SOL BÖLME
+            const readLayoutContainer = document.getElementById('readLayoutContainer');
             const slotLeftContainer = document.getElementById('readSlotLeftContainer');
             const slotLeft = document.getElementById('readSlotLeft');
-            if (slots.left) {
+            const slotRightContainer = document.getElementById('readSlotRightContainer');
+            const slotRight = document.getElementById('readSlotRight');
+
+            // SIFIRLAMA
+            readLayoutContainer.className = "journal-layout-container";
+            
+            const hasLeft = !!slots.left;
+            const hasRight = !!slots.right;
+
+            if (hasLeft && hasRight) {
+                readLayoutContainer.classList.add("has-both");
+            } else if (hasLeft) {
+                readLayoutContainer.classList.add("has-left");
+            } else if (hasRight) {
+                readLayoutContainer.classList.add("has-right");
+            } else {
+                readLayoutContainer.classList.add("no-photos");
+            }
+
+            // SOL BÖLME SÜRÜKLE/GÖSTER
+            if (hasLeft) {
                 slotLeft.innerHTML = `<img src="${slots.left}" alt="Sol Anı">`;
                 slotLeftContainer.style.display = 'block';
             } else {
                 slotLeftContainer.style.display = 'none';
             }
 
-            // SAĞ BÖLME
-            const slotRightContainer = document.getElementById('readSlotRightContainer');
-            const slotRight = document.getElementById('readSlotRight');
-            if (slots.right) {
+            // SAĞ BÖLME SÜRÜKLE/GÖSTER
+            if (hasRight) {
                 slotRight.innerHTML = `<img src="${slots.right}" alt="Sağ Anı">`;
                 slotRightContainer.style.display = 'block';
             } else {
                 slotRightContainer.style.display = 'none';
             }
 
-            // ALT BÖLME
+            // ALT BÖLME SÜRÜKLE/GÖSTER
             const slotBottomContainer = document.getElementById('readSlotBottomContainer');
             const slotBottom = document.getElementById('readSlotBottom');
             if (slots.bottom) {
@@ -905,7 +932,7 @@
                 title: escapeHTML(document.getElementById('entryTitle').value),
                 content: escapeHTML(document.getElementById('entryContent').value),
                 mood: document.getElementById('entryMood').value,
-                slotPhotos: { ...slotPhotos }, // SAĞ, SOL VE ALT FOTOĞRAFLAR
+                slotPhotos: { ...slotPhotos },
                 font: selectedFont,
                 date: formattedDate,
                 rawDate: localRawDate,
